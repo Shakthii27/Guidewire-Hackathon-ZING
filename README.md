@@ -25,7 +25,7 @@
 
 India has over **15 million gig delivery workers**. They are classified as independent contractors — which means no employer, no sick leave, and no income protection.
 
-Every summer, Delhi hits **46°C+**. Every monsoon, streets flood in minutes. Every winter, AQI crosses 500. On those days, a delivery rider faces an impossible choice:
+Every summer, Chennai experiences **extreme heat and high humidity**, making outdoor work dangerous. Every monsoon, streets flood in minutes. Every winter, AQI crosses 500. On those days, a delivery rider faces an impossible choice:
 
 > **Log off and survive the conditions - or ride through it and survive the month.**
 
@@ -41,7 +41,7 @@ No existing insurance product addresses this. Traditional insurance requires cla
 
 | Attribute | Detail |
 |-----------|--------|
-| **Role** | Gold-Tier Zomato delivery partner, New Delhi |
+| **Role** | Gold-Tier Zomato delivery partner, Chennai |
 | **Income** | ₹600–800/day, weekly payout cycle |
 | **Dependents** | Pays rent + supports family |
 | **Device** | Android smartphone, always on the road |
@@ -49,7 +49,7 @@ No existing insurance product addresses this. Traditional insurance requires cla
 
 ### The Scenario
 
-It is the third week of May 2026. Delhi's Heat Index has been climbing for five days. On Tuesday morning, the Wet-Bulb Globe Temperature in Shakthi's delivery zone crosses **36.2°C** - a level at which outdoor physical labour is medically classified as dangerous.
+It is the third week of May 2026. Chennai's heat index has been rising steadily for five days due to high temperature and humidity. On Tuesday morning, the Wet-Bulb Globe Temperature in Shakthi's delivery zone crosses **36.2°C** - a level at which outdoor physical labour is medically classified as dangerous.
 
 **Without Zing:** Shakthi rides anyway. She risks heat stroke. Or she logs off and loses ₹240 for the day - money she cannot afford to lose.
 
@@ -88,7 +88,6 @@ ZERO-TOUCH PAYOUT
 - All checks pass → instant UPI transfer
 - Failed check → claim held, rider notified with reason
 
-
 ---
 
 ## Weekly Premium Model
@@ -100,7 +99,6 @@ Zing does not charge a fixed monthly premium. Instead, **risk is priced fresh ev
 Every Sunday, Zing's ML model runs a **7-day disruption probability forecast** for each active pin code. The premium for the coming week is calculated as:
 
 Weekly Premium = Base Rate × Risk Multiplier × Tier Adjustment
-
 
 | Weather Forecast | Risk Multiplier | Example Premium (Gold Tier) |
 |---|---|---|
@@ -169,7 +167,7 @@ Zing uses three triggers:
 | Data Source | OpenWeatherMap + IMD rainfall API |
 | Granularity | Pin-code level |
 
-> 50mm/2hr is the threshold at which urban drainage in Indian metros (Delhi, Mumbai, Chennai) typically fails, causing surface flooding that physically prevents two-wheeler movement.
+> 50mm/2hr is the threshold at which urban drainage in Indian metros (Chennai, Mumbai) typically fails, causing surface flooding that physically prevents two-wheeler movement.
 
 ---
 
@@ -240,14 +238,6 @@ Trust Score system adjusts premiums based on behaviour.
 
 ---
 
-## Development Plan
-
-- Week 1: Foundation  
-- Week 2: Trigger pipeline  
-- Week 3: AI/ML layer  
-- Week 4: Integration & demo  
-
----
 
 ## Adversarial Defense & Anti-Spoofing Strategy
 
@@ -255,7 +245,7 @@ Zing is designed to operate in adversarial environments where coordinated fraud 
 
 ### 1. Differentiation: Genuine Rider vs Spoofed Actor
 
-Zing does not rely on GPS alone. Instead, it builds a **behavioral and contextual profile** of each rider during a disruption event.
+Zing does not rely on GPS alone. Instead, it builds a *behavioral and contextual profile* of each rider during a disruption event.
 
 A genuine stranded rider typically shows:
 - Sudden transition from active → inactive state
@@ -274,21 +264,21 @@ Zing’s AI engine evaluates these patterns in real time to classify events as l
 
 To detect coordinated fraud rings, Zing analyzes multiple data layers:
 
-**Device-Level Signals**
+*Device-Level Signals*
 - Accelerometer and gyroscope data (movement vs claimed inactivity)
 - App foreground/background usage patterns
 - Device integrity checks (mock location detection)
 
-**Platform-Level Data**
+*Platform-Level Data*
 - Rider activity status from delivery platform APIs (online/offline, active orders)
 - Weekly earnings correlation with claimed downtime
 
-**Network & Location Context**
+*Network & Location Context*
 - IP address clustering (multiple riders claiming from same network)
 - Cell tower triangulation vs GPS mismatch
 - Historical location consistency patterns
 
-**Peer-Based Intelligence**
+*Peer-Based Intelligence*
 - Real-time comparison with other riders in the same pin code
 - Detection of abnormal clusters of simultaneous claims
 - “Ghost zone” detection where few riders claim disruption but majority remain active
@@ -296,7 +286,7 @@ To detect coordinated fraud rings, Zing analyzes multiple data layers:
 
 ### 3. UX Balance: Fairness for Honest Riders
 
-Zing is designed to **minimize false negatives** (rejecting genuine claims) while preventing fraud.
+Zing is designed to *minimize false negatives* (rejecting genuine claims) while preventing fraud.
 
 If a claim is flagged:
 - Payout is temporarily held, not rejected
@@ -327,6 +317,15 @@ This ensures that honest riders experiencing genuine disruptions (e.g., network 
 This creates a system that is resilient against coordinated fraud while remaining fair, fast, and frictionless for genuine delivery partners.
 
 --- 
+
+## Development Plan
+
+- Week 1: Foundation  
+- Week 2: Trigger pipeline  
+- Week 3: AI/ML layer  
+- Week 4: Integration & demo  
+
+---
 
 ## Why Zing Wins
 
