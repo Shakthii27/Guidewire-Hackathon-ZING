@@ -1,6 +1,5 @@
 # Zing - Parametric Micro-Insurance for Delivery Partners
 
-> **"Weather the Ride."**
 > Zing is a mobile-first parametric micro-insurance platform that automatically protects gig delivery workers from income loss caused by extreme weather events - with zero paperwork and instant payouts.
 
 ---
