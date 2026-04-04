@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Zing — Parametric Insurance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0c0c10;
+    --surface: #16161e;
+    --surface2: #1e1e28;
+    --border: #2a2a38;
+    --orange: #FF5722;
+    --orange-dim: rgba(255,87,34,0.15);
+    --orange-glow: rgba(255,87,34,0.35);
+    --green: #4CAF50;
+    --green-dim: rgba(76,175,80,0.12);
+    --purple: #9C27B0;
+    --blue: #2196F3;
+    --text: #ffffff;
+    --text-sub: #888899;
+    --text-dim: #44445a;
+    --red: #F44336;
+    --yellow: #FF9800;
+  }
+
+  html, body {
+    height: 100%;
+    background: #08080c;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .phone {
+    width: min(375px, 100vw);
+    height: min(812px, 100vh);
+    background: var(--bg);
+    border-radius: clamp(0px, 4vw, 44px);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 1px #1a1a2a, 0 60px 120px rgba(0,0,0,0.8);
+  }
+
+  /* All screens stacked, only active shown */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen.active { display: flex; }
+
+  /* Status bar */
+  .status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 24px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+  .status-right { display: flex; gap: 5px; align-items: center; font-size: 11px; }
+
+  /* Scrollable content area */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* ======================== SCREEN 0: SPLASH ======================== */
+  #s0 {
+    background: linear-gradient(160deg, #0c0c10 0%, #180a04 100%);
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+  .splash-logo {
+    width: 88px; height: 88px;
+    background: var(--orange);
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 16px 48px var(--orange-glow);
+    animation: logoPop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes logoPop {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .splash-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    animation: fadeUp 0.5s 0.2s both;
+  }
+  .splash-tag { font-size: 13px; color: var(--text-sub); animation: fadeUp 0.5s 0.35s both; text-align: center; padding: 0 40px; line-height: 1.6; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+  .splash-badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; animation: fadeUp 0.5s 0.45s both; }
+  .badge {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid;
+  }
+  .badge-heat { background: rgba(255,87,34,0.1); color: #FF7043; border-color: rgba(255,87,34,0.3); }
+  .badge-aqi { background: rgba(156,39,176,0.1); color: #CE93D8; border-color: rgba(156,39,176,0.3); }
+  .badge-flood { background: rgba(33,150,243,0.1); color: #90CAF9; border-color: rgba(33,150,243,0.3); }
+
+  .splash-bottom { padding: 0 24px; width: 100%; animation: fadeUp 0.5s 0.55s both; }
+  .btn-primary {
+    width: 100%; padding: 16px; border-radius: 16px; border: none;
+    background: var(--orange); color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; box-shadow: 0 8px 24px var(--orange-glow);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:active { transform: scale(0.97); box-shadow: 0 4px 12px var(--orange-glow); }
+  .btn-ghost {
+    width: 100%; padding: 14px; border-radius: 16px;
+    border: 1.5px solid var(--border); background: transparent; color: var(--text-sub);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; margin-top: 10px;
+    transition: border-color 0.2s;
+  }
+  .btn-ghost:active { border-color: var(--orange); }
+  .splash-legal { font-size: 10px; color: var(--text-dim); text-align: center; margin-top: 12px; }
+
+  /* ======================== SCREEN 1: OTP VERIFICATION ======================== */
+  #s1 { background: var(--bg); }
+  .verify-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px 40px;
+    gap: 24px;
+    overflow-y: auto;
+  }
+  .back-link { color: var(--orange); font-size: 13px; cursor: pointer; width: fit-content; }
+  .verify-head { font-family: 'Syne', sans-serif; font-size: 26px; line-height: 1.2; }
+  .verify-sub { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+
+  .input-group { display: flex; flex-direction: column; gap: 8px; }
+  .input-label { font-size: 12px; font-weight: 600; color: var(--text-sub); letter-spacing: 0.5px; text-transform: uppercase; }
+  .input-field {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--orange); }
+  .input-field::placeholder { color: var(--text-dim); }
+
+  .otp-row { display: flex; gap: 8px; justify-content: center; }
+  .otp-box {
+    flex: 1; max-width: 44px; height: 52px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 12px; text-align: center;
+    color: var(--text); font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    outline: none; transition: border-color 0.2s;
+  }
+  .otp-box:focus { border-color: var(--orange); }
+
+  .security-badge {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--green-dim); border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .security-badge-text { font-size: 12px; color: #81C784; line-height: 1.4; }
+
+  .steps-row { display: flex; gap: 6px; }
+  .step-dot {
+    height: 4px; border-radius: 2px; transition: all 0.3s;
+  }
+  .step-dot.done { background: var(--orange); flex: 2; }
+  .step-dot.active { background: var(--orange); flex: 2; opacity: 0.6; }
+  .step-dot.pending { background: var(--border); flex: 1; }
+
+  /* Face/Biometric screen */
+  .biometric-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px 24px; gap: 20px; text-align: center;
+  }
+  .face-ring {
+    width: 140px; height: 140px; border-radius: 50%;
+    border: 3px solid var(--orange);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    animation: scanPulse 2s infinite;
+  }
+  @keyframes scanPulse {
+    0%,100% { box-shadow: 0 0 0 0 var(--orange-dim); }
+    50% { box-shadow: 0 0 0 20px transparent; }
+  }
+  .face-icon { font-size: 64px; }
+  .scan-line {
+    position: absolute; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--orange), transparent);
+    top: 0; animation: scanMove 2s infinite linear;
+  }
+  @keyframes scanMove { from { top: 0%; } to { top: 100%; } }
+  .biometric-title { font-family: 'Syne', sans-serif; font-size: 24px; }
+  .biometric-sub { font-size: 13px; color: var(--text-sub); line-height: 1.6; }
+  .biometric-checks { display: flex; flex-direction: column; gap: 8px; width: 100%; text-align: left; }
+  .bio-check { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 12px; padding: 12px 14px; }
+  .bio-check-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .bio-check-icon.pass { background: var(--green-dim); }
+  .bio-check-icon.pending { background: var(--orange-dim); }
+  .bio-check-text { flex: 1; font-size: 13px; color: var(--text-sub); }
+  .bio-check-status { font-size: 11px; font-weight: 700; }
+  .bio-check-status.pass { color: #81C784; }
+  .bio-check-status.pending { color: var(--orange); }
+
+  /* ======================== SCREEN 2: DASHBOARD ======================== */
+  #s2 { background: var(--bg); }
+  .dash-top { padding: 8px 20px 14px; flex-shrink: 0; }
+  .dash-greet { font-size: 13px; color: var(--text-sub); margin-bottom: 2px; }
+  .dash-name { font-family: 'Syne', sans-serif; font-size: 24px; }
+
+  .shield-card {
+    margin: 0 16px 14px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #FF5722 0%, #BF360C 100%);
+    padding: 20px; position: relative; overflow: hidden;
+    flex-shrink: 0; cursor: pointer;
+  }
+  .shield-card::before {
+    content: '';
+    position: absolute; right: -30px; top: -30px;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+  }
+  .shield-card::after {
+    content: '';
+    position: absolute; right: 20px; bottom: -40px;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+  .shield-tier { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.65); letter-spacing: 1.5px; text-transform: uppercase; }
+  .shield-status { font-family: 'Syne', sans-serif; font-size: 28px; color: #fff; margin: 4px 0 2px; }
+  .shield-week { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .shield-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 18px; }
+  .shield-coverage-label { font-size: 11px; color: rgba(255,255,255,0.55); }
+  .shield-coverage-val { font-family: 'Syne', sans-serif; font-size: 26px; color: #fff; }
+  .shield-pill {
+    background: rgba(255,255,255,0.18); padding: 7px 12px; border-radius: 20px;
+    font-size: 11px; color: #fff; font-weight: 600;
+  }
+
+  .metrics-row { display: flex; gap: 10px; padding: 0 16px; margin-bottom: 14px; flex-shrink: 0; }
+  .metric-card {
+    flex: 1; background: var(--surface); border-radius: 18px;
+    padding: 14px 12px; border: 1px solid var(--border);
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .metric-card:active { border-color: var(--orange); }
+  .metric-icon { font-size: 20px; margin-bottom: 6px; }
+  .metric-val { font-family: 'Syne', sans-serif; font-size: 20px; }
+  .metric-val.hot { color: var(--orange); }
+  .metric-val.bad { color: #CE93D8; }
+  .metric-val.ok { color: #81C784; }
+  .metric-label { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; padding: 0 20px; margin-bottom: 10px; }
+
+  .alert-card {
+    margin: 0 16px 14px;
+    background: rgba(255,87,34,0.08); border: 1px solid rgba(255,87,34,0.22);
+    border-radius: 18px; padding: 14px 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .alert-dot-wrap { padding-top: 2px; }
+  .alert-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--orange);
+    box-shadow: 0 0 0 4px rgba(255,87,34,0.2);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 4px rgba(255,87,34,0.18); }
+    50% { box-shadow: 0 0 0 10px rgba(255,87,34,0.04); }
+  }
+  .alert-title { font-size: 13px; font-weight: 700; color: #FF7043; margin-bottom: 2px; }
+  .alert-desc { font-size: 12px; color: var(--text-sub); line-height: 1.5; }
+  .alert-cta { font-size: 11px; color: var(--orange); font-weight: 600; margin-top: 6px; }
+
+  /* Auto-payout notice */
+  .auto-notice {
+    margin: 0 16px 14px;
+    background: var(--green-dim); border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 16px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .auto-notice-text { font-size: 12px; color: #81C784; line-height: 1.5; }
+
+  .history-list { padding: 0 16px; }
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 8px; border: 1px solid var(--border);
+  }
+  .history-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .history-icon.paid { background: var(--green-dim); }
+  .history-icon.missed { background: rgba(244,67,54,0.12); }
+  .history-info { flex: 1; }
+  .history-title { font-size: 13px; color: var(--text); font-weight: 600; }
+  .history-date { font-size: 11px; color: var(--text-sub); margin-top: 1px; }
+  .history-amt { font-family: 'Syne', sans-serif; font-size: 15px; }
+  .history-amt.green { color: #81C784; }
+  .history-amt.red { color: #EF9A9A; }
+
+  .bottom-nav {
+    display: flex; background: #0f0f16;
+    border-top: 1px solid var(--border);
+    padding: 10px 0 26px; flex-shrink: 0;
+  }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; color: var(--text-dim); }
+  .nav-item.active .nav-label { color: var(--orange); }
+
+  /* ======================== SCREEN 3: ALERT TRIGGER ======================== */
+  #s3 { background: var(--bg); }
+  .alert-screen-top { padding: 8px 24px 16px; flex-shrink: 0; }
+  .back-btn { font-size: 13px; color: var(--orange); cursor: pointer; margin-bottom: 10px; display: block; }
+  .alert-screen-title { font-family: 'Syne', sans-serif; font-size: 26px; line-height: 1.2; }
+
+  .wbgt-hero {
+    margin: 0 16px 14px;
+    background: linear-gradient(135deg, #1a0800, #2a0e08);
+    border: 1px solid rgba(255,87,34,0.22);
+    border-radius: 24px; padding: 22px; text-align: center; flex-shrink: 0;
+  }
+  .wbgt-label { font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .wbgt-value { font-family: 'Syne', sans-serif; font-size: 68px; color: var(--orange); line-height: 1; }
+  .wbgt-warn { font-size: 12px; color: #FF7043; margin-top: 4px; }
+  .wbgt-bar-wrap { margin-top: 16px; }
+  .wbgt-bar-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-dim); margin-bottom: 6px; }
+  .wbgt-bar { height: 8px; border-radius: 4px; background: var(--surface2); overflow: hidden; }
+  .wbgt-fill { height: 100%; width: 80%; background: linear-gradient(90deg, #FF9800, #FF5722, #D32F2F); border-radius: 4px; }
+
+  .auto-trigger-notice {
+    margin: 0 16px 14px;
+    background: var(--green-dim); border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .auto-trigger-text { font-size: 12px; color: #81C784; line-height: 1.5; font-weight: 600; }
+
+  .checks-section { padding: 0 16px; }
+  .check-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border-radius: 16px;
+    padding: 14px; margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .check-icon-box {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .check-icon-box.met { background: rgba(76,175,80,0.12); }
+  .check-icon-box.warn { background: rgba(255,152,0,0.12); }
+  .check-icon-box.fail { background: rgba(244,67,54,0.12); }
+  .check-text { flex: 1; }
+  .check-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .check-val { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .check-badge { font-size: 11px; font-weight: 700; }
+  .check-badge.met { color: #81C784; }
+  .check-badge.warn { color: #FFB74D; }
+  .check-badge.fail { color: #EF9A9A; }
+
+  .auto-payout-processing {
+    margin: 14px 16px 0;
+    background: linear-gradient(135deg, rgba(76,175,80,0.1), rgba(76,175,80,0.06));
+    border: 1px solid rgba(76,175,80,0.25);
+    border-radius: 18px; padding: 18px; text-align: center; flex-shrink: 0;
+  }
+  .processing-title { font-family: 'Syne', sans-serif; font-size: 16px; color: #81C784; margin-bottom: 6px; }
+  .processing-sub { font-size: 12px; color: var(--text-sub); }
+  .processing-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 14px; overflow: hidden; }
+  .processing-fill { height: 100%; width: 0%; background: #4CAF50; border-radius: 2px; animation: fillBar 3s ease forwards; }
+  @keyframes fillBar { to { width: 100%; } }
+
+  /* ======================== SCREEN 4: PAYOUT ======================== */
+  #s4 { background: var(--bg); }
+  .payout-top { padding: 8px 24px 20px; flex-shrink: 0; }
+  .payout-anim {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 24px 16px; text-align: center; flex-shrink: 0;
+  }
+  .check-circle {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(76,175,80,0.12); border: 2px solid #4CAF50;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 16px;
+    animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes pop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .payout-head { font-family: 'Syne', sans-serif; font-size: 26px; }
+  .payout-amount { font-family: 'Syne', sans-serif; font-size: 52px; color: #81C784; line-height: 1.1; }
+  .payout-sub { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+  .auto-label { margin-top: 8px; background: var(--green-dim); border: 1px solid rgba(76,175,80,0.2); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #81C784; font-weight: 600; display: inline-block; }
+
+  .breakdown-card {
+    margin: 0 16px 12px;
+    background: var(--surface); border-radius: 20px;
+    padding: 16px; border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .breakdown-row {
+    display: flex; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-key { color: var(--text-sub); }
+  .breakdown-val { color: var(--text); font-weight: 600; }
+  .breakdown-val.green { color: #81C784; }
+
+  .fraud-clear {
+    margin: 0 16px 12px;
+    background: var(--green-dim); border: 1px solid rgba(76,175,80,0.18);
+    border-radius: 18px; padding: 14px 16px; flex-shrink: 0;
+  }
+  .fraud-clear-title { font-size: 11px; color: #81C784; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .fraud-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
+  .fraud-tick { color: #81C784; font-weight: 700; }
+
+  .upi-btn {
+    margin: 0 16px 16px;
+    padding: 16px; border-radius: 16px; border: none;
+    background: #1a73e8; color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    flex-shrink: 0; width: calc(100% - 32px);
+  }
+
+  /* ======================== SCREEN 5: FRAUD SHIELD ======================== */
+  #s5 { background: var(--bg); }
+  .fraud-top { padding: 8px 24px 16px; flex-shrink: 0; }
+  .fraud-screen-title { font-family: 'Syne', sans-serif; font-size: 24px; }
+
+  .trust-card {
+    margin: 0 16px 14px;
+    background: var(--surface); border-radius: 20px;
+    border: 1px solid var(--border); padding: 18px;
+    display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  }
+  .trust-ring { width: 72px; height: 72px; position: relative; flex-shrink: 0; }
+  .trust-ring svg { position: absolute; top: 0; left: 0; }
+  .trust-num {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 20px; color: #81C784;
+  }
+  .trust-info { flex: 1; }
+  .trust-label { font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+  .trust-val { font-family: 'Syne', sans-serif; font-size: 22px; color: #81C784; }
+  .trust-tier { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+  .fraud-checks-list { padding: 0 16px; }
+  .fraud-card {
+    background: var(--surface); border-radius: 16px;
+    border: 1px solid var(--border); padding: 14px; margin-bottom: 10px;
+  }
+  .fraud-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .fraud-card-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .pill { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+  .pill-pass { background: rgba(76,175,80,0.15); color: #81C784; }
+  .pill-watch { background: rgba(255,152,0,0.15); color: #FFB74D; }
+  .pill-fail { background: rgba(244,67,54,0.15); color: #EF9A9A; }
+  .fraud-card-desc { font-size: 12px; color: var(--text-sub); line-height: 1.5; }
+  .fraud-card-data { font-size: 11px; font-weight: 600; margin-top: 6px; }
+  .fraud-card-data.ok { color: #81C784; }
+  .fraud-card-data.warn { color: #FFB74D; }
+
+  .fraud-bottom-note {
+    margin: 0 16px 16px;
+    background: rgba(255,87,34,0.07); border: 1px solid rgba(255,87,34,0.15);
+    border-radius: 14px; padding: 12px 14px;
+    font-size: 12px; color: #FF7043; line-height: 1.5; flex-shrink: 0;
+  }
+
+  /* ======================== SCREEN 6: PROFILE / HISTORY ======================== */
+  #s6 { background: var(--bg); }
+  .profile-top { padding: 8px 24px 16px; flex-shrink: 0; }
+  .profile-card {
+    margin: 0 16px 14px;
+    background: var(--surface); border-radius: 20px;
+    border: 1px solid var(--border); padding: 20px;
+    display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  }
+  .avatar {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, #FF5722, #BF360C);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; color: #fff;
+    font-family: 'Syne', sans-serif; flex-shrink: 0;
+  }
+  .profile-name { font-family: 'Syne', sans-serif; font-size: 20px; }
+  .profile-id { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .profile-tier { font-size: 11px; color: var(--orange); font-weight: 600; margin-top: 4px; }
+
+  .stats-row { display: flex; gap: 10px; padding: 0 16px; margin-bottom: 14px; flex-shrink: 0; }
+  .stat-card { flex: 1; background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 14px 10px; text-align: center; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 22px; color: var(--orange); }
+  .stat-label { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
+
+  .logout-btn {
+    margin: 0 16px 16px; padding: 14px; border-radius: 14px;
+    border: 1.5px solid rgba(244,67,54,0.3); background: transparent;
+    color: #EF9A9A; font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; width: calc(100% - 32px); flex-shrink: 0;
+  }
+
+  /* ======================== TOAST ======================== */
+  .toast {
+    position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: #1e1e28; border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 18px;
+    font-size: 13px; color: var(--text); white-space: nowrap;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Slide transitions */
+  .slide-in-right { animation: slideInRight 0.3s cubic-bezier(0.25,0.46,0.45,0.94) both; }
+  .slide-in-left { animation: slideInLeft 0.3s cubic-bezier(0.25,0.46,0.45,0.94) both; }
+  @keyframes slideInRight { from { transform: translateX(100%); opacity:0; } to { transform: none; opacity:1; } }
+  @keyframes slideInLeft { from { transform: translateX(-100%); opacity:0; } to { transform: none; opacity:1; } }
+
+  /* Loading spinner */
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.8s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error state */
+  .input-field.error { border-color: var(--red); }
+  .error-text { font-size: 11px; color: #EF9A9A; margin-top: 4px; }
+
+  /* ======================== SCREEN 7: PREMIUM ENGINE ======================== */
+  #s7 { background: var(--bg); }
+  .prem-top { padding: 8px 24px 14px; flex-shrink: 0; }
+  .prem-title { font-family: 'Syne', sans-serif; font-size: 24px; }
+  .prem-result-card {
+    margin: 0 16px 14px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #FF5722 0%, #BF360C 100%);
+    padding: 22px; position: relative; overflow: hidden; flex-shrink: 0;
+  }
+  .prem-result-card::before {
+    content: ''; position: absolute; right: -20px; top: -20px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+  }
+  .prem-computed-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1.5px; text-transform: uppercase; }
+  .prem-computed-val { font-family: 'Syne', sans-serif; font-size: 52px; color: #fff; line-height: 1.1; margin: 6px 0 2px; }
+  .prem-computed-period { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .prem-computed-note { margin-top: 14px; background: rgba(255,255,255,0.12); border-radius: 12px; padding: 10px 12px; font-size: 12px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+  .prem-model-badge {
+    margin: 0 16px 14px;
+    background: rgba(33,150,243,0.1); border: 1px solid rgba(33,150,243,0.2);
+    border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .prem-model-text { font-size: 12px; color: #90CAF9; line-height: 1.5; }
+  .factor-card {
+    margin: 0 16px 10px;
+    background: var(--surface); border-radius: 16px;
+    border: 1px solid var(--border); padding: 14px; flex-shrink: 0;
+  }
+  .factor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .factor-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .factor-impact { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .impact-high { background: rgba(255,87,34,0.15); color: #FF7043; }
+  .impact-med  { background: rgba(255,152,0,0.15); color: #FFB74D; }
+  .impact-low  { background: rgba(76,175,80,0.15); color: #81C784; }
+  .factor-bar-track { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; margin-bottom: 8px; }
+  .factor-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 1.2s ease; }
+  .fill-red { background: linear-gradient(90deg, #FF9800, #FF5722); }
+  .fill-orange { background: linear-gradient(90deg, #FFD54F, #FF9800); }
+  .fill-green { background: linear-gradient(90deg, #A5D6A7, #4CAF50); }
+  .factor-desc { font-size: 11px; color: var(--text-sub); line-height: 1.5; }
+  .factor-source { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+  .prem-history-note {
+    margin: 0 16px 14px;
+    background: var(--surface); border-radius: 14px;
+    border: 1px solid var(--border); overflow: hidden; flex-shrink: 0;
+  }
+  .prem-history-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .prem-history-row:last-child { border-bottom: none; }
+  .prem-history-week { color: var(--text-sub); font-size: 12px; }
+  .prem-history-right { text-align: right; }
+  .prem-history-val { font-weight: 600; color: var(--text); }
+  .prem-history-reason { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+  .readonly-notice {
+    margin: 0 16px 16px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .readonly-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+  /* ======================== MORNING CHECK-IN CARD ======================== */
+  .checkin-card {
+    margin: 0 16px 14px;
+    background: linear-gradient(135deg, rgba(33,150,243,0.12), rgba(33,150,243,0.06));
+    border: 1.5px solid rgba(33,150,243,0.35);
+    border-radius: 20px; padding: 16px; flex-shrink: 0;
+    position: relative; overflow: hidden;
+  }
+  .checkin-card.done {
+    background: var(--green-dim);
+    border-color: rgba(76,175,80,0.35);
+  }
+  .checkin-card::before {
+    content: '';
+    position: absolute; right: -20px; top: -20px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(33,150,243,0.06);
+  }
+  .checkin-badge { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #90CAF9; margin-bottom: 6px; }
+  .checkin-title { font-family: 'Syne', sans-serif; font-size: 16px; color: #fff; margin-bottom: 4px; }
+  .checkin-sub { font-size: 11px; color: var(--text-sub); line-height: 1.5; margin-bottom: 12px; }
+  .checkin-earnings-preview { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .checkin-earn-label { font-size: 10px; color: var(--text-dim); }
+  .checkin-earn-val { font-family: 'Syne', sans-serif; font-size: 15px; color: #90CAF9; }
+  .checkin-btn {
+    width: 100%; padding: 12px; border-radius: 12px; border: none;
+    background: #2196F3; color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .checkin-btn.done-state { background: rgba(76,175,80,0.25); color: #81C784; cursor: default; }
+  .checkin-streak { font-size: 10px; color: var(--text-dim); text-align: center; margin-top: 6px; }
+
+  /* ======================== EARNINGS VELOCITY FINGERPRINT ======================== */
+  .evf-card {
+    margin: 0 16px 14px;
+    background: var(--surface); border-radius: 20px;
+    border: 1px solid var(--border); padding: 16px; flex-shrink: 0;
+  }
+  .evf-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .evf-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .evf-badge { font-size: 10px; font-weight: 700; background: rgba(33,150,243,0.12); color: #90CAF9; padding: 3px 9px; border-radius: 20px; }
+  .evf-baseline-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .evf-slot {
+    flex: 1; background: var(--surface2); border-radius: 10px; padding: 8px 6px; text-align: center;
+    border: 1px solid var(--border);
+  }
+  .evf-slot-time { font-size: 9px; color: var(--text-dim); margin-bottom: 3px; }
+  .evf-slot-val { font-size: 13px; font-weight: 700; color: var(--text); }
+  .evf-slot-val.hot { color: #FF7043; }
+  .evf-payout-highlight {
+    background: rgba(76,175,80,0.1); border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 12px; padding: 10px 12px; margin-top: 8px;
+  }
+  .evf-payout-label { font-size: 10px; color: var(--text-sub); margin-bottom: 4px; }
+  .evf-payout-calc { font-size: 12px; color: var(--text-sub); }
+  .evf-payout-total { font-family: 'Syne', sans-serif; font-size: 22px; color: #81C784; }
+
+  /* ======================== PREMIUM CHANGE REASON ======================== */
+  .prem-change-reason {
+    margin: 0 16px 14px;
+    background: rgba(33,150,243,0.08); border: 1.5px solid rgba(33,150,243,0.25);
+    border-radius: 16px; padding: 14px 16px; flex-shrink: 0;
+  }
+  .prem-change-icon { font-size: 18px; margin-bottom: 6px; }
+  .prem-change-label { font-size: 10px; color: #90CAF9; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .prem-change-text { font-size: 13px; color: var(--text); line-height: 1.6; }
+  .prem-change-detail { font-size: 11px; color: var(--text-sub); margin-top: 6px; line-height: 1.5; }
+
+  /* ======================== SCREEN 8: INSURER COMMAND CENTER ======================== */
+  #s8 { background: var(--bg); }
+  .insurer-top { padding: 8px 24px 14px; flex-shrink: 0; }
+  .insurer-title { font-family: 'Syne', sans-serif; font-size: 22px; }
+  .insurer-subtitle { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; margin-bottom: 14px; flex-shrink: 0; }
+  .kpi-card {
+    background: var(--surface); border-radius: 18px;
+    border: 1px solid var(--border); padding: 14px;
+  }
+  .kpi-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-val { font-family: 'Syne', sans-serif; font-size: 24px; }
+  .kpi-val.good { color: #81C784; }
+  .kpi-val.warn { color: var(--yellow); }
+  .kpi-val.bad { color: var(--orange); }
+  .kpi-sub { font-size: 10px; color: var(--text-sub); margin-top: 3px; }
+  .kpi-trend { font-size: 10px; font-weight: 700; margin-top: 4px; }
+  .kpi-trend.up { color: #EF9A9A; }
+  .kpi-trend.down { color: #81C784; }
+
+  .heatmap-section { padding: 0 16px; margin-bottom: 14px; }
+  .heatmap-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .heatmap-cell {
+    aspect-ratio: 1; border-radius: 8px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4px;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .heatmap-cell:active { transform: scale(0.95); }
+  .heatmap-cell.h-low { background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.2); }
+  .heatmap-cell.h-med { background: rgba(255,152,0,0.15); border: 1px solid rgba(255,152,0,0.2); }
+  .heatmap-cell.h-high { background: rgba(255,87,34,0.15); border: 1px solid rgba(255,87,34,0.2); }
+  .heatmap-cell.h-crit { background: rgba(244,67,54,0.2); border: 1px solid rgba(244,67,54,0.3); }
+  .heatmap-zone { font-size: 8px; color: var(--text-dim); text-align: center; line-height: 1.2; }
+  .heatmap-risk { font-size: 11px; font-weight: 700; }
+  .heatmap-risk.low { color: #81C784; }
+  .heatmap-risk.med { color: #FFB74D; }
+  .heatmap-risk.high { color: #FF7043; }
+  .heatmap-risk.crit { color: #EF9A9A; }
+
+  .risk-forecast-card {
+    margin: 0 16px 14px;
+    background: var(--surface); border-radius: 18px;
+    border: 1px solid var(--border); padding: 14px; flex-shrink: 0;
+  }
+  .risk-forecast-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .risk-forecast-row:last-child { border-bottom: none; }
+  .risk-zone-badge { padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; min-width: 80px; text-align: center; }
+  .badge-crit { background: rgba(244,67,54,0.15); color: #EF9A9A; }
+  .badge-high { background: rgba(255,87,34,0.15); color: #FF7043; }
+  .badge-med { background: rgba(255,152,0,0.15); color: #FFB74D; }
+  .risk-zone-name { flex: 1; font-size: 12px; color: var(--text); }
+  .risk-zone-pct { font-size: 12px; font-weight: 700; color: var(--text-sub); }
+
+  .flagged-claims-card {
+    margin: 0 16px 14px;
+    background: rgba(244,67,54,0.06); border: 1px solid rgba(244,67,54,0.18);
+    border-radius: 16px; overflow: hidden; flex-shrink: 0;
+  }
+  .flagged-header { padding: 10px 14px; border-bottom: 1px solid rgba(244,67,54,0.12); font-size: 11px; font-weight: 700; color: #EF9A9A; letter-spacing: 0.5px; text-transform: uppercase; }
+  .flagged-row { padding: 10px 14px; border-bottom: 1px solid rgba(244,67,54,0.08); display: flex; gap: 10px; align-items: center; }
+  .flagged-row:last-child { border-bottom: none; }
+  .flagged-id { font-size: 11px; color: var(--text-sub); min-width: 80px; }
+  .flagged-reason { flex: 1; font-size: 12px; color: var(--text); }
+  .flagged-action { font-size: 10px; font-weight: 700; color: #FFB74D; }
+
+  /* WBGT Tooltip / Callout */
+  .wbgt-why-box {
+    margin-top: 10px;
+    background: rgba(255,87,34,0.1); border: 1px solid rgba(255,87,34,0.25);
+    border-radius: 12px; padding: 10px 12px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .wbgt-why-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .wbgt-why-text { font-size: 11px; color: #FF7043; line-height: 1.5; }
+  .wbgt-why-text strong { color: #FF5722; }
+
+  /* ======================== PLATFORM PICKER ======================== */
+  .platform-pick-row { display: flex; gap: 10px; }
+  .platform-btn {
+    flex: 1; padding: 14px 10px; border-radius: 16px;
+    border: 2px solid var(--border); background: var(--surface);
+    color: var(--text-sub); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+  }
+  .platform-btn .plat-icon { font-size: 24px; }
+  .platform-btn.selected-zomato {
+    border-color: #E23744; background: rgba(226,55,68,0.1); color: #E23744;
+  }
+  .platform-btn.selected-swiggy {
+    border-color: #FC8019; background: rgba(252,128,25,0.1); color: #FC8019;
+  }
+
+  /* ======================== SCREEN 9: COVERAGE EXCLUSIONS ======================== */
+  #s9 { background: var(--bg); }
+  .excl-top { padding: 8px 24px 16px; flex-shrink: 0; }
+  .excl-title { font-family: 'Syne', sans-serif; font-size: 24px; line-height: 1.2; }
+  .excl-sub { font-size: 12px; color: var(--text-sub); margin-top: 4px; line-height: 1.5; }
+
+  .excl-intro {
+    margin: 0 16px 14px;
+    background: rgba(33,150,243,0.08); border: 1px solid rgba(33,150,243,0.2);
+    border-radius: 16px; padding: 14px 16px; flex-shrink: 0;
+  }
+  .excl-intro-text { font-size: 12px; color: #90CAF9; line-height: 1.6; }
+
+  .excl-group { padding: 0 16px; margin-bottom: 14px; flex-shrink: 0; }
+  .excl-group-label {
+    font-size: 10px; font-weight: 700; color: var(--text-dim);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .excl-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 6px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .excl-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .excl-content { flex: 1; }
+  .excl-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .excl-reason { font-size: 11px; color: var(--text-sub); line-height: 1.5; }
+  .excl-badge {
+    font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    align-self: flex-start; flex-shrink: 0; margin-top: 2px;
+  }
+  .excl-badge-never { background: rgba(244,67,54,0.15); color: #EF9A9A; }
+  .excl-badge-threshold { background: rgba(255,152,0,0.15); color: #FFB74D; }
+  .excl-badge-fraud { background: rgba(156,39,176,0.15); color: #CE93D8; }
+
+  .covered-yes {
+    margin: 0 16px 14px; flex-shrink: 0;
+    background: var(--green-dim); border: 1px solid rgba(76,175,80,0.2);
+    border-radius: 14px; padding: 12px 14px;
+  }
+  .covered-yes-label { font-size: 10px; font-weight: 700; color: #81C784; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+  .covered-yes-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .covered-yes-row:last-child { margin-bottom: 0; }
+  .covered-yes-dot { color: #81C784; font-size: 13px; flex-shrink: 0; }
+  .covered-yes-text { font-size: 12px; color: #A5D6A7; line-height: 1.4; }
+
+  .irda-note {
+    margin: 0 16px 16px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .irda-note-text { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+</style>
+</head>
+<body>
+
+<div class="phone" id="phone">
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ====== SCREEN 9: COVERAGE EXCLUSIONS ====== -->
+  <div id="s9" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="excl-top">
+      <span class="back-btn" onclick="goTo('s6')">← Back</span>
+      <div class="excl-title">Coverage &amp;<br>Exclusions</div>
+      <div class="excl-sub">Policy document · Effective from your activation date</div>
+    </div>
+    <div class="scroll">
+
+      <!-- What IS covered -->
+      <div class="covered-yes" style="margin-top:4px">
+        <div class="covered-yes-label">✓ What Zing Covers</div>
+        <div class="covered-yes-row"><span class="covered-yes-dot">✓</span><span class="covered-yes-text">Income loss from <strong style="color:#81C784">heatwave</strong> — WBGT ≥ 35°C sustained for 2+ hours in your registered zone</span></div>
+        <div class="covered-yes-row"><span class="covered-yes-dot">✓</span><span class="covered-yes-text">Income loss from <strong style="color:#81C784">flash floods</strong> — rainfall ≥ 40mm/hr causing zone waterlogging confirmed by IMD</span></div>
+        <div class="covered-yes-row"><span class="covered-yes-dot">✓</span><span class="covered-yes-text">Income loss from <strong style="color:#81C784">severe AQI</strong> — AQI ≥ 450 (Hazardous) for 3+ hours in your active delivery pin code</span></div>
+        <div class="covered-yes-row"><span class="covered-yes-dot">✓</span><span class="covered-yes-text">Payouts are <strong style="color:#81C784">parametric</strong> — triggered automatically by verified sensor data, not your self-reported claim</span></div>
+      </div>
+
+      <div class="excl-intro">
+        <div class="excl-intro-text">⚠️ <strong style="color:#90CAF9">Zing is parametric income insurance</strong> — payouts trigger only when objective sensor thresholds are crossed. Events outside these triggers are not covered, regardless of their impact on your ability to deliver.</div>
+      </div>
+
+      <!-- Group 1: Events that never trigger -->
+      <div class="excl-group">
+        <div class="excl-group-label">🚫 Events That Never Trigger a Payout</div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🌡</div>
+          <div class="excl-content">
+            <div class="excl-name">Heat Below Threshold</div>
+            <div class="excl-reason">If WBGT stays below 35°C, no heatwave payout is issued — even if you feel too hot to work or a local advisory is issued. The parametric trigger is objective and non-negotiable.</div>
+          </div>
+          <div class="excl-badge excl-badge-threshold">THRESHOLD</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🌧</div>
+          <div class="excl-content">
+            <div class="excl-name">Rain Without Flood Trigger</div>
+            <div class="excl-reason">Ordinary monsoon rain that doesn't cause IMD-confirmed waterlogging or breach the 40mm/hr threshold is not covered, even if orders slow down or roads get wet.</div>
+          </div>
+          <div class="excl-badge excl-badge-threshold">THRESHOLD</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">💨</div>
+          <div class="excl-content">
+            <div class="excl-name">Moderate Air Pollution</div>
+            <div class="excl-reason">AQI between 300–449 (Very Poor) does not trigger a payout. Only Hazardous AQI ≥ 450 sustained for 3+ hours in your pin code qualifies.</div>
+          </div>
+          <div class="excl-badge excl-badge-threshold">THRESHOLD</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🤒</div>
+          <div class="excl-content">
+            <div class="excl-name">Illness, Injury &amp; Medical Events</div>
+            <div class="excl-reason">Personal illness, accidents, hospitalisation, or physical injury — including those caused by weather — are not covered. Zing insures income lost to environmental disruption, not personal health events. Seek a separate health or accident policy.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🛵</div>
+          <div class="excl-content">
+            <div class="excl-name">Vehicle Breakdown or Damage</div>
+            <div class="excl-reason">Mechanical failure, tyre puncture, accident repair, or theft of your delivery vehicle is not covered. These require a separate motor or vehicle insurance policy.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">📵</div>
+          <div class="excl-content">
+            <div class="excl-name">Platform Suspension or Deactivation</div>
+            <div class="excl-reason">If Zomato or Swiggy suspends, bans, or deactivates your account, Zing does not cover the resulting income loss. Coverage requires an active, in-good-standing platform account.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🧨</div>
+          <div class="excl-content">
+            <div class="excl-name">Civil Unrest, Strikes &amp; Bandhs</div>
+            <div class="excl-reason">Income loss from curfews, political protests, bandhs, riots, or civil disturbances is excluded. These are classified as force majeure events outside Zing's parametric model.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🏗</div>
+          <div class="excl-content">
+            <div class="excl-name">Road Closures &amp; Infrastructure Issues</div>
+            <div class="excl-reason">Planned or emergency road closures, metro construction disruptions, traffic diversions, or signal failures that reduce delivery opportunities are not covered.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">⚡</div>
+          <div class="excl-content">
+            <div class="excl-name">Power Outages &amp; Network Downtime</div>
+            <div class="excl-reason">Platform app downtime, internet outages, or electricity failures that prevent you from accepting orders are not a covered event under Zing's parametric triggers.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🎭</div>
+          <div class="excl-content">
+            <div class="excl-name">Intentional Non-Work &amp; Self-Exclusion</div>
+            <div class="excl-reason">Choosing not to work for personal reasons — festivals, rest days, family commitments — does not qualify, even if a weather trigger is active. Morning check-in must be completed by 9 AM to establish shift intent.</div>
+          </div>
+          <div class="excl-badge excl-badge-never">NOT COVERED</div>
+        </div>
+      </div>
+
+      <!-- Group 2: Fraud-related exclusions -->
+      <div class="excl-group">
+        <div class="excl-group-label">🛡 Fraud &amp; Misrepresentation Exclusions</div>
+
+        <div class="excl-item">
+          <div class="excl-icon">📍</div>
+          <div class="excl-content">
+            <div class="excl-name">GPS Spoofing or Zone Mismatch</div>
+            <div class="excl-reason">If your device location doesn't match your registered delivery zone during the disruption window, the claim is automatically voided. Mock-location apps are detected and result in immediate account suspension.</div>
+          </div>
+          <div class="excl-badge excl-badge-fraud">FRAUD</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">💸</div>
+          <div class="excl-content">
+            <div class="excl-name">Parallel Income During Disruption</div>
+            <div class="excl-reason">If platform earnings data shows you completed deliveries on another app (Swiggy, Porter, etc.) during the disruption window, the claim is rejected. Zing pays for lost income only — not double-income periods.</div>
+          </div>
+          <div class="excl-badge excl-badge-fraud">FRAUD</div>
+        </div>
+
+        <div class="excl-item">
+          <div class="excl-icon">🪪</div>
+          <div class="excl-content">
+            <div class="excl-name">Identity Mismatch</div>
+            <div class="excl-reason">Payouts are locked to your biometric-verified identity. Accounts shared across individuals, fake Rider IDs, or failed face-match during payout are grounds for permanent claim denial and account termination.</div>
+          </div>
+          <div class="excl-badge excl-badge-fraud">FRAUD</div>
+        </div>
+      </div>
+
+      <!-- IRDAI note -->
+      <div class="irda-note">
+        <span style="font-size:18px;flex-shrink:0">📋</span>
+        <div class="irda-note-text">Zing is a parametric micro-insurance product regulated under IRDAI guidelines for weather-index insurance. All exclusions comply with IRDAI's standard uninsurable events framework. For disputes, contact our grievance officer at grievance@zinginsure.in within 15 days of a denied payout. Full policy wording available in the app's Documents section.</div>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 0: SPLASH / ONBOARDING ====== -->
+  <div id="s0" class="screen active" style="background:linear-gradient(160deg,#0c0c10 0%,#180a04 100%);align-items:center;justify-content:center;gap:20px;padding:24px;overflow-y:auto;">
+    <div class="splash-logo">🛡</div>
+    <div>
+      <div class="splash-name" style="text-align:center">Zing</div>
+    </div>
+    <div class="splash-tag">Parametric micro-insurance for India's delivery workforce. We protect your income — automatically.</div>
+    <div class="splash-badges">
+      <span class="badge badge-heat">🌡 Heatwave</span>
+      <span class="badge badge-aqi">💨 Air Quality</span>
+      <span class="badge badge-flood">🌧 Flash Flood</span>
+    </div>
+    <div class="splash-bottom">
+      <button class="btn-primary" onclick="goTo('s1a')">Get Started — Link Your Rider ID</button>
+      <button class="btn-ghost" onclick="goTo('s1b')">I already have an account</button>
+      <div class="splash-legal">By continuing you agree to our Terms &amp; Privacy Policy</div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 1A: REGISTER — PHONE + ZOMATO ID ====== -->
+  <div id="s1a" class="screen">
+    <div class="status"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="verify-wrap">
+      <span class="back-link" onclick="goTo('s0')">← Back</span>
+      <div>
+        <div class="steps-row" style="margin-bottom:16px">
+          <div class="step-dot active" style="flex:2"></div>
+          <div class="step-dot pending"></div>
+          <div class="step-dot pending"></div>
+        </div>
+        <div class="verify-head">Create your<br>Zing account</div>
+        <div class="verify-sub" style="margin-top:8px">Step 1 of 3 — Basic details & platform link</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Delivery Platform</div>
+        <div class="platform-pick-row">
+          <button class="platform-btn" id="pick-zomato" onclick="selectPlatform('zomato')">
+            <span class="plat-icon">🔴</span>Zomato
+          </button>
+          <button class="platform-btn" id="pick-swiggy" onclick="selectPlatform('swiggy')">
+            <span class="plat-icon">🟠</span>Swiggy
+          </button>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Full Name</div>
+        <input class="input-field" id="reg-name" type="text" placeholder="e.g. Shakthi Devi" />
+      </div>
+      <div class="input-group">
+        <div class="input-label">Mobile Number</div>
+        <input class="input-field" id="reg-phone" type="tel" placeholder="+91 98765 43210" maxlength="13" />
+      </div>
+      <div class="input-group">
+        <div class="input-label" id="reg-zid-label">Rider ID</div>
+        <input class="input-field" id="reg-zid" type="text" placeholder="Select platform first" />
+        <div style="font-size:11px;color:var(--text-sub)" id="reg-zid-hint">Select your platform above first</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">UPI ID for Payouts</div>
+        <input class="input-field" id="reg-upi" type="text" placeholder="yourname@upi" />
+      </div>
+      <div class="security-badge">
+        <span style="font-size:20px">🔒</span>
+        <div class="security-badge-text" id="reg-security-text">Your Rider ID is verified against the platform's partner database. Only real delivery partners can enroll.</div>
+      </div>
+      <div style="background:rgba(33,150,243,0.08);border:1px solid rgba(33,150,243,0.2);border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px;flex-shrink:0">📈</span>
+        <div style="font-size:11px;color:#90CAF9;line-height:1.5" id="reg-fingerprint-text"><strong style="color:#64B5F6">Earnings Fingerprint:</strong> We'll pull your last 8 weeks of payouts to build your personal hourly baseline. Your payouts reflect <em>your</em> actual lost earnings — not a flat industry rate.</div>
+      </div>
+      <button class="btn-primary" onclick="registerStep1()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 1B: SIGN IN ====== -->
+  <div id="s1b" class="screen">
+    <div class="status"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="verify-wrap">
+      <span class="back-link" onclick="goTo('s0')">← Back</span>
+      <div>
+        <div class="verify-head">Welcome back,<br>partner 👋</div>
+        <div class="verify-sub" style="margin-top:8px">Sign in to your Zing account</div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Delivery Platform</div>
+        <div class="platform-pick-row">
+          <button class="platform-btn" id="login-pick-zomato" onclick="selectLoginPlatform('zomato')">
+            <span class="plat-icon">🔴</span>Zomato
+          </button>
+          <button class="platform-btn" id="login-pick-swiggy" onclick="selectLoginPlatform('swiggy')">
+            <span class="plat-icon">🟠</span>Swiggy
+          </button>
+        </div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">Mobile Number</div>
+        <input class="input-field" id="login-phone" type="tel" placeholder="+91 98765 43210" maxlength="13" />
+      </div>
+      <div class="input-group">
+        <div class="input-label" id="login-zid-label">Rider ID</div>
+        <input class="input-field" id="login-zid" type="text" placeholder="Select platform first" />
+      </div>
+      <div class="security-badge">
+        <span style="font-size:20px">🛡</span>
+        <div class="security-badge-text">We'll send a one-time password to your mobile to verify it's really you before granting access.</div>
+      </div>
+      <button class="btn-primary" onclick="loginStep1()">Send OTP</button>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 1C: OTP ====== -->
+  <div id="s1c" class="screen">
+    <div class="status"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="verify-wrap">
+      <span class="back-link" onclick="goTo('s1a')">← Back</span>
+      <div>
+        <div class="steps-row" style="margin-bottom:16px">
+          <div class="step-dot done" style="flex:2"></div>
+          <div class="step-dot active" style="flex:2"></div>
+          <div class="step-dot pending"></div>
+        </div>
+        <div class="verify-head">Verify your<br>mobile number</div>
+        <div class="verify-sub" style="margin-top:8px" id="otp-sub">Enter the 6-digit OTP sent to your number. <strong style="color:var(--text)">For demo: use 123456</strong></div>
+      </div>
+      <div class="input-group">
+        <div class="input-label">One-Time Password</div>
+        <div class="otp-row">
+          <input class="otp-box" id="otp1" maxlength="1" type="tel" oninput="otpMove(this,'otp2')" />
+          <input class="otp-box" id="otp2" maxlength="1" type="tel" oninput="otpMove(this,'otp3')" />
+          <input class="otp-box" id="otp3" maxlength="1" type="tel" oninput="otpMove(this,'otp4')" />
+          <input class="otp-box" id="otp4" maxlength="1" type="tel" oninput="otpMove(this,'otp5')" />
+          <input class="otp-box" id="otp5" maxlength="1" type="tel" oninput="otpMove(this,'otp6')" />
+          <input class="otp-box" id="otp6" maxlength="1" type="tel" oninput="otpDone()" />
+        </div>
+        <div id="otp-error" class="error-text" style="display:none">Incorrect OTP. Please try again.</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-sub);text-align:center">Didn't receive? <span style="color:var(--orange);cursor:pointer" onclick="showToast('OTP resent!')">Resend OTP</span></div>
+      <div class="security-badge">
+        <span style="font-size:20px">🔐</span>
+        <div class="security-badge-text">OTPs expire in 5 minutes and can only be used once. Never share your OTP with anyone.</div>
+      </div>
+      <button class="btn-primary" id="verify-otp-btn" onclick="verifyOTP()">Verify OTP</button>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 1D: BIOMETRIC ====== -->
+  <div id="s1d" class="screen">
+    <div class="status"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="biometric-wrap">
+      <div>
+        <div class="steps-row" style="margin-bottom:16px">
+          <div class="step-dot done" style="flex:2"></div>
+          <div class="step-dot done" style="flex:2"></div>
+          <div class="step-dot active" style="flex:2"></div>
+        </div>
+      </div>
+      <div class="face-ring">
+        <div class="scan-line"></div>
+        <div class="face-icon">👤</div>
+      </div>
+      <div class="biometric-title">Face Verification</div>
+      <div class="biometric-sub" id="bio-platform-text">Step 3 of 3 — We're verifying your identity against your Zomato registration photo to prevent unauthorized access.</div>
+      <div class="biometric-checks">
+        <div class="bio-check" id="bio-c1">
+          <div class="bio-check-icon pending" id="bio-icon1">⏳</div>
+          <div class="bio-check-text">Liveness detection</div>
+          <div class="bio-check-status pending" id="bio-s1">Scanning...</div>
+        </div>
+        <div class="bio-check" id="bio-c2">
+          <div class="bio-check-icon pending" id="bio-icon2">⏳</div>
+          <div class="bio-check-text">Photo ID match</div>
+          <div class="bio-check-status pending" id="bio-s2">Waiting...</div>
+        </div>
+        <div class="bio-check" id="bio-c3">
+          <div class="bio-check-icon pending" id="bio-icon3">⏳</div>
+          <div class="bio-check-text">Device fingerprint</div>
+          <div class="bio-check-status pending" id="bio-s3">Waiting...</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="bio-btn" onclick="startBiometric()">Start Face Scan</button>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 2: DASHBOARD ====== -->
+  <div id="s2" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="dash-top">
+      <div class="dash-greet">Good morning,</div>
+      <div class="dash-name" id="dash-name">Shakthi 👋</div>
+    </div>
+    <div class="scroll">
+      <div class="shield-card" onclick="goTo('s7')" style="cursor:pointer">
+        <div class="shield-tier" id="shield-tier">Gold Tier · Zomato Partner</div>
+        <div class="shield-status">Zing Active</div>
+        <div class="shield-week">Week of May 19 – 25, 2026</div>
+        <div class="shield-row">
+          <div>
+            <div class="shield-coverage-label">This week's coverage</div>
+            <div class="shield-coverage-val">₹1,200</div>
+          </div>
+          <div class="shield-pill">₹20 premium paid ✓</div>
+        </div>
+      </div>
+      <div class="metrics-row" id="metrics">
+        <div class="metric-card" onclick="goTo('s3')" style="position:relative">
+          <div class="metric-icon">🌡</div>
+          <div class="metric-val hot" id="m-heat">36.2°</div>
+          <div class="metric-label">WBGT</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:3px;line-height:1.3">44°C · 62% RH<br>⚠ Near threshold</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">💨</div>
+          <div class="metric-val bad" id="m-aqi">382</div>
+          <div class="metric-label">AQI</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:3px">Very Poor</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🌧</div>
+          <div class="metric-val ok" id="m-rain">12mm</div>
+          <div class="metric-label">Rainfall</div>
+          <div style="font-size:9px;color:var(--text-dim);margin-top:3px">Below trigger</div>
+        </div>
+      </div>
+      <div class="auto-notice">
+        <span style="font-size:18px">⚡</span>
+        <div class="auto-notice-text"><strong style="color:#81C784">Auto-Payout Active</strong> — No action needed. If conditions are met, your payout triggers automatically.</div>
+      </div>
+      <!-- FEATURE 2: Pre-Shift Intent Signal (Morning Check-in) -->
+      <div class="checkin-card" id="checkin-card">
+        <div class="checkin-badge">🌅 Morning Check-In · Fraud Prevention</div>
+        <div class="checkin-title">Starting your shift today?</div>
+        <div class="checkin-sub">One tap confirms payout eligibility. If a disruption hits, your claim is already verified — no paperwork, instant auto-payout.</div>
+        <div class="checkin-earnings-preview">
+          <div>
+            <div class="checkin-earn-label">Your baseline today (Tue afternoon)</div>
+            <div class="checkin-earn-val">₹80 – ₹95 / hr expected</div>
+          </div>
+          <div style="font-size:22px">📈</div>
+        </div>
+        <button class="checkin-btn" id="checkin-btn" onclick="doCheckin()">
+          <span>🚴</span> Yes, I'm starting my shift
+        </button>
+        <div class="checkin-streak" id="checkin-streak">7-day check-in streak · Boosts trust score</div>
+      </div>
+
+      <div class="alert-card" onclick="goTo('s3')">
+        <div class="alert-dot-wrap"><div class="alert-dot"></div></div>
+        <div>
+          <div class="alert-title">Heat Advisory — Dwarka Sector 10</div>
+          <div class="alert-desc">WBGT approaching danger zone. Monitoring active.</div>
+          <div class="alert-cta">Tap to see live parametric checks →</div>
+        </div>
+      </div>
+      <div class="section-label" style="margin-top:4px">Recent Payouts</div>
+      <div class="history-list">
+        <div class="history-item">
+          <div class="history-icon paid">⚡</div>
+          <div class="history-info">
+            <div class="history-title">Heatwave Payout — Auto</div>
+            <div class="history-date">May 14, 2026 · 2h 40min disruption</div>
+          </div>
+          <div class="history-amt green">+₹213</div>
+        </div>
+        <div class="history-item">
+          <div class="history-icon paid">🌧</div>
+          <div class="history-info">
+            <div class="history-title">Flash Flood Payout — Auto</div>
+            <div class="history-date">May 8, 2026 · 4h disruption</div>
+          </div>
+          <div class="history-amt green">+₹320</div>
+        </div>
+        <div class="history-item">
+          <div class="history-icon missed">💨</div>
+          <div class="history-info">
+            <div class="history-title">AQI Alert — Not triggered</div>
+            <div class="history-date">May 2, 2026 · AQI peaked at 420</div>
+          </div>
+          <div class="history-amt red">—</div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="showTab('s2',0)"><span class="nav-icon">🏠</span><span class="nav-label" style="color:var(--orange)">Home</span></div>
+      <div class="nav-item" onclick="goTo('s3')"><span class="nav-icon">📊</span><span class="nav-label">Alerts</span></div>
+      <div class="nav-item" onclick="goTo('s4')"><span class="nav-icon">💰</span><span class="nav-label">Payouts</span></div>
+      <div class="nav-item" onclick="goTo('s8')"><span class="nav-icon">🏦</span><span class="nav-label">Insurer</span></div>
+      <div class="nav-item" onclick="goTo('s6')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 3: ALERT / PARAMETRIC TRIGGER ====== -->
+  <div id="s3" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="alert-screen-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div class="alert-screen-title">Heatwave<br>Disruption Alert</div>
+    </div>
+    <div class="scroll">
+      <div class="wbgt-hero">
+        <div class="wbgt-label">Wet Bulb Globe Temperature · WBGT</div>
+        <div class="wbgt-value">36.2°</div>
+        <div class="wbgt-warn">⚠ Danger threshold crossed (35°C) · 3h 10min</div>
+
+        <!-- FEATURE 5: WBGT Why callout — makes science visible to judges -->
+        <div class="wbgt-why-box">
+          <div class="wbgt-why-icon">🔬</div>
+          <div class="wbgt-why-text"><strong>Why WBGT, not just temperature?</strong> A 40°C day at 70% humidity is more dangerous than 44°C at 30% humidity. WBGT captures both — because humidity blocks sweat evaporation, your body's only cooling mechanism. Used by WHO for outdoor worker safety.</div>
+        </div>
+
+        <!-- WBGT calculation breakdown -->
+        <div style="margin-top:14px;background:rgba(0,0,0,0.25);border-radius:12px;padding:12px;text-align:left">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">How WBGT is calculated</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:11px;color:rgba(255,255,255,0.5)">Air Temperature</span>
+            <span style="font-size:11px;color:#FF7043;font-weight:600">44°C</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:11px;color:rgba(255,255,255,0.5)">Relative Humidity</span>
+            <span style="font-size:11px;color:#FF7043;font-weight:600">62%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:11px;color:rgba(255,255,255,0.5)">Wind Speed</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600">8 km/h</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:11px;color:rgba(255,255,255,0.5)">Solar Radiation</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600">820 W/m²</span>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:rgba(255,255,255,0.6);font-style:italic">Liljegren WBGT formula</span>
+            <span style="font-size:13px;color:#FF5722;font-weight:700">= 36.2°C WBGT</span>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:rgba(255,255,255,0.35);line-height:1.5">Same air temp (44°C) in a dry zone (30% RH) would give WBGT ≈ 30.4° — safe. Humidity is what makes this dangerous.</div>
+        </div>
+
+        <div class="wbgt-bar-wrap" style="margin-top:12px">
+          <div class="wbgt-bar-labels"><span>Safe</span><span>Caution</span><span>Danger</span></div>
+          <div class="wbgt-bar"><div class="wbgt-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="auto-trigger-notice">
+        <span style="font-size:20px">🤖</span>
+        <div class="auto-trigger-text" id="auto-trigger-text">All 4 checks passed — Payout processing automatically. No action required from Shakthi.</div>
+      </div>
+
+      <div class="section-label">Parametric Checks</div>
+      <div class="checks-section">
+        <div class="check-row">
+          <div class="check-icon-box met">🌡</div>
+          <div class="check-text">
+            <div class="check-name">Thermal Stress</div>
+            <div class="check-val">WBGT = 36.2°C &gt; 35°C for 3h+</div>
+          </div>
+          <span class="check-badge met">✓ MET</span>
+        </div>
+        <div class="check-row">
+          <div class="check-icon-box met">📍</div>
+          <div class="check-text">
+            <div class="check-name">Zone Match</div>
+            <div class="check-val">Dwarka Sector 10 · Pin 110075</div>
+          </div>
+          <span class="check-badge met">✓ MET</span>
+        </div>
+        <div class="check-row">
+          <div class="check-icon-box met">📱</div>
+          <div class="check-text">
+            <div class="check-name">Activity Status</div>
+            <div class="check-val" id="check-activity-val">Rider logged off Zomato 3h ago</div>
+          </div>
+          <span class="check-badge met">✓ MET</span>
+        </div>
+        <div class="check-row">
+          <div class="check-icon-box met">🛰</div>
+          <div class="check-text">
+            <div class="check-name">GPS Stationary</div>
+            <div class="check-val">No movement detected, 2h 55min</div>
+          </div>
+          <span class="check-badge met">✓ MET</span>
+        </div>
+      </div>
+
+      <div class="auto-payout-processing" id="auto-processing">
+        <div class="processing-title">⚡ Auto-Processing Payout...</div>
+        <div class="processing-sub">Zing AI verified all conditions. Transferring ₹240 to your UPI automatically.</div>
+        <div class="processing-bar"><div class="processing-fill"></div></div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+    <div style="padding:0 16px 20px;flex-shrink:0">
+      <button class="btn-primary" onclick="goTo('s4')" style="background:var(--green);box-shadow:0 8px 24px rgba(76,175,80,0.3)">View Payout Details →</button>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 4: PAYOUT ====== -->
+  <div id="s4" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="payout-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div style="font-family:'Syne',sans-serif;font-size:22px">Payout Record</div>
+    </div>
+    <div class="scroll">
+      <div class="payout-anim">
+        <div class="check-circle">✓</div>
+        <div class="payout-head">Payout Approved</div>
+        <div class="payout-amount">₹240</div>
+        <div class="payout-sub">For 3 lost hours · May 21, 2026</div>
+        <div class="auto-label">⚡ Auto-triggered · No claim needed</div>
+      </div>
+      <div class="breakdown-card">
+        <div class="section-label" style="padding:0;margin-bottom:12px">Breakdown</div>
+        <div class="breakdown-row"><span class="breakdown-key">Trigger</span><span class="breakdown-val">Heatwave WBGT &gt;35°C</span></div>
+        <div class="breakdown-row"><span class="breakdown-key">Duration</span><span class="breakdown-val">3 hours 10 min</span></div>
+        <div class="breakdown-row"><span class="breakdown-key">Rate</span><span class="breakdown-val">₹80/hr <span style="font-size:10px;color:var(--text-sub)">(your baseline, Tue PM)</span></span></div>
+        <div class="breakdown-row"><span class="breakdown-key">Zone</span><span class="breakdown-val">Dwarka Sector 10</span></div>
+        <div class="breakdown-row"><span class="breakdown-key">Total Payout</span><span class="breakdown-val green">₹240.00</span></div>
+        <div class="breakdown-row"><span class="breakdown-key">Method</span><span class="breakdown-val">Instant UPI (Auto)</span></div>
+      </div>
+
+      <!-- FEATURE 1: Earnings Velocity Fingerprint card -->
+      <div class="evf-card">
+        <div class="evf-header">
+          <span class="evf-title">📈 Earnings Velocity Fingerprint</span>
+          <span class="evf-badge">YOUR BASELINE</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px;line-height:1.5" id="evf-source-text">Built from your last 8 weeks of Zomato payouts. Your payout = <em>your actual expected earnings</em> for those hours — not a flat industry rate.</div>
+        <div class="evf-baseline-row">
+          <div class="evf-slot">
+            <div class="evf-slot-time">Mon AM</div>
+            <div class="evf-slot-val">₹65</div>
+          </div>
+          <div class="evf-slot">
+            <div class="evf-slot-time">Mon PM</div>
+            <div class="evf-slot-val">₹75</div>
+          </div>
+          <div class="evf-slot">
+            <div class="evf-slot-time">Tue PM</div>
+            <div class="evf-slot-val hot">₹80</div>
+          </div>
+          <div class="evf-slot">
+            <div class="evf-slot-time">Fri PM</div>
+            <div class="evf-slot-val hot">₹95</div>
+          </div>
+          <div class="evf-slot">
+            <div class="evf-slot-time">Sun</div>
+            <div class="evf-slot-val">₹110</div>
+          </div>
+        </div>
+        <div class="evf-payout-highlight">
+          <div class="evf-payout-label">This payout calculation (Tue 11AM – 2PM)</div>
+          <div class="evf-payout-calc">3.1 hrs × ₹80/hr (your Tue PM baseline) =</div>
+          <div class="evf-payout-total">₹240 <span style="font-size:11px;color:var(--text-sub)" id="evf-name-tag">personalised to Shakthi</span></div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--text-dim);line-height:1.5" id="evf-verified-text">✓ Fairer than flat rates · ✓ Harder to fake — your baseline is unique · ✓ Verified against 8-week Zomato history</div>
+      </div>
+      <div class="fraud-clear">
+        <div class="fraud-clear-title">Zing Shield — All Clear</div>
+        <div class="fraud-item"><span class="fraud-tick">✓</span> <span id="fraud-sync-item">Platform sync: Zomato offline confirmed</span></div>
+        <div class="fraud-item"><span class="fraud-tick">✓</span> Earnings correlation: No duplicate claim</div>
+        <div class="fraud-item"><span class="fraud-tick">✓</span> Ghost zone: 68% riders also offline</div>
+        <div class="fraud-item"><span class="fraud-tick">✓</span> GPS spoofing: No anomaly detected</div>
+      </div>
+      <button class="upi-btn" id="upi-btn">⚡ Transferred to shakthi@upi · ₹240</button>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 5: FRAUD / CLAIM INTELLIGENCE ====== -->
+  <div id="s5" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="fraud-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div style="font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">AI Zing Shield</div>
+      <div class="fraud-screen-title">Claim Intelligence</div>
+    </div>
+    <div class="scroll">
+      <div class="trust-card">
+        <div class="trust-ring">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#252530" stroke-width="6"/>
+            <circle cx="36" cy="36" r="28" fill="none" stroke="#4CAF50" stroke-width="6"
+              stroke-dasharray="175.9" stroke-dashoffset="21" stroke-linecap="round"
+              transform="rotate(-90 36 36)"/>
+          </svg>
+          <div class="trust-num">92</div>
+        </div>
+        <div class="trust-info">
+          <div class="trust-label">Trust Score</div>
+          <div class="trust-val">92 / 100</div>
+          <div class="trust-tier">Low Risk · Premium stays at ₹20/wk</div>
+        </div>
+      </div>
+
+      <div class="section-label">Active Checks</div>
+      <div class="fraud-checks-list">
+        <div class="fraud-card">
+          <div class="fraud-card-header">
+            <span class="fraud-card-name">Platform Sync Check</span>
+            <span class="pill pill-pass">PASS</span>
+          </div>
+          <div class="fraud-card-desc" id="fraud-api-desc">Zomato API confirms Shakthi offline since 11:20 AM. No active deliveries found on any linked device.</div>
+          <div class="fraud-card-data ok">▲ Consistent across 2 devices</div>
+        </div>
+        <div class="fraud-card">
+          <div class="fraud-card-header">
+            <span class="fraud-card-name">Earnings Correlation</span>
+            <span class="pill pill-pass">PASS</span>
+          </div>
+          <div class="fraud-card-desc" id="fraud-earnings-desc">End-of-week Zomato payout shows ₹0 earnings on claimed disruption day. No duplicate income detected.</div>
+          <div class="fraud-card-data ok">▲ No anomaly in payout history</div>
+        </div>
+        <div class="fraud-card">
+          <div class="fraud-card-header">
+            <span class="fraud-card-name">Ghost Zone Analysis</span>
+            <span class="pill pill-watch">WATCH</span>
+          </div>
+          <div class="fraud-card-desc">68% of riders in Dwarka Sector 10 are offline. Below 95% threshold — anomaly detection engaged. Monitoring extended.</div>
+          <div class="fraud-card-data warn">▼ Monitoring extended 30 min</div>
+        </div>
+        <div class="fraud-card">
+          <div class="fraud-card-header">
+            <span class="fraud-card-name">GPS Spoof Detection</span>
+            <span class="pill pill-pass">PASS</span>
+          </div>
+          <div class="fraud-card-desc">Accelerometer and GPS cross-validated. No mock-location apps detected. Phone stationary at home coordinates.</div>
+          <div class="fraud-card-data ok">▲ Sensor fingerprint clean</div>
+        </div>
+      </div>
+      <div class="fraud-bottom-note">⚠ Ghost Zone watch active for 30 more minutes. Payout is queued and will auto-release on confirmation.</div>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 6: PROFILE ====== -->
+  <div id="s6" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="profile-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div style="font-family:'Syne',sans-serif;font-size:24px">My Profile</div>
+    </div>
+    <div class="scroll">
+      <div class="profile-card">
+        <div class="avatar" id="profile-avatar">SD</div>
+        <div>
+          <div class="profile-name" id="profile-name">Shakthi Devi</div>
+          <div class="profile-id" id="profile-id">ZMT-48291047 · +91 98765 43210</div>
+          <div class="profile-tier" id="profile-tier">⭐ Gold Tier Partner</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val">₹773</div>
+          <div class="stat-label">Earned back</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">3</div>
+          <div class="stat-label">Payouts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">92</div>
+          <div class="stat-label">Trust score</div>
+        </div>
+      </div>
+
+      <div style="padding:0 16px;margin-bottom:14px">
+        <div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="goTo('s5')">
+            <div style="font-size:13px">Zing Shield / Fraud Score</div>
+            <div style="font-size:13px;color:var(--text-sub)">92/100 →</div>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px">UPI ID</div>
+            <div style="font-size:13px;color:var(--text-sub)" id="profile-upi">shakthi@upi</div>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="goTo('s7')">
+            <div style="font-size:13px">Current Premium</div>
+            <div style="font-size:13px;color:var(--orange)">₹20 / week →</div>
+          </div>
+          <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:13px">Biometric Auth</div>
+            <div style="font-size:13px;color:#81C784">✓ Enabled</div>
+          </div>
+          <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="goTo('s9')">
+            <div style="font-size:13px">Coverage &amp; Exclusions</div>
+            <div style="font-size:13px;color:var(--text-sub)">What's not covered →</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:0 16px;margin-bottom:14px">
+        <div style="background:var(--orange-dim);border:1px solid rgba(255,87,34,0.2);border-radius:16px;padding:14px 16px">
+          <div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:6px">⚡ AUTO-PAYOUT ENABLED</div>
+          <div style="font-size:12px;color:var(--text-sub);line-height:1.6">Your account is set to receive payouts automatically when all parametric triggers are met. You will be notified via push notification when a payout is processed.</div>
+        </div>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 7: PREMIUM ENGINE ====== -->
+  <div id="s7" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="prem-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div style="font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">ML Premium Engine</div>
+      <div class="prem-title">Your Weekly Rate</div>
+    </div>
+    <div class="scroll">
+
+      <!-- FEATURE 4: "Why It Changed" conversational premium explanation -->
+      <div class="prem-change-reason">
+        <div class="prem-change-icon">💬</div>
+        <div class="prem-change-label">Why your premium changed this week</div>
+        <div class="prem-change-text">Your premium went up ₹3 this week because IMD forecasts a heatwave for your zone Thu–Sat, with WBGT expected to cross 37°C.</div>
+        <div class="prem-change-detail">Last week: ₹17 · This week: ₹20 · Change: +₹3<br>Primary driver: 4-day extreme heat forecast (68% disruption probability). Your trust score discount of ₹3 partially offset what would have been a ₹23 base.</div>
+      </div>
+
+      <!-- Computed result — system generated, no user input -->
+      <div class="prem-result-card">
+        <div class="prem-computed-label">System-Computed Premium</div>
+        <div class="prem-computed-val" id="prem-val">₹20</div>
+        <div class="prem-computed-period">for week of May 19 – 25, 2026</div>
+        <div class="prem-computed-note">
+          Calculated every Monday at 6 AM using 5 years of IMD hyper-local data + OpenWeatherMap 7-day forecast for <strong>Pin 110075 — Dwarka Sector 10</strong>. You cannot adjust this — it is set by the model to stay actuarially fair.
+        </div>
+      </div>
+
+      <!-- Model source badge -->
+      <div class="prem-model-badge">
+        <span style="font-size:22px">🤖</span>
+        <div class="prem-model-text"><strong style="color:#90CAF9">Ridge Regression Model</strong> — trained on 5 years of IMD + OpenWeatherMap historical data, per pin code. Predicts disruption probability for the coming week and prices accordingly.</div>
+      </div>
+
+      <div class="section-label">Risk Factors (Read-Only)</div>
+
+      <!-- Factor 1: Historical Heat Events -->
+      <div class="factor-card">
+        <div class="factor-header">
+          <span class="factor-name">🌡 Historical Heat Events</span>
+          <span class="factor-impact impact-high">HIGH WEIGHT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-red" id="bar1" style="width:78%"></div></div>
+        <div class="factor-desc">Pin 110075 recorded <strong style="color:var(--text)">23 WBGT-breach days</strong> in the past 12 months — 2.1× the Delhi average. Heat disruptions are the primary driver of this zone's premium.</div>
+        <div class="factor-source">Source: IMD historical dataset · 5-year window · Updated weekly</div>
+      </div>
+
+      <!-- Factor 2: Forecasted Disruption Probability -->
+      <div class="factor-card">
+        <div class="factor-header">
+          <span class="factor-name">📡 7-Day Forecast Risk</span>
+          <span class="factor-impact impact-high">HIGH WEIGHT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-red" id="bar2" style="width:72%"></div></div>
+        <div class="factor-desc">Model predicts <strong style="color:var(--text)">68% probability</strong> of at least one WBGT breach this week. Forecast: 4 days above 42°C, peak 46°C expected Thursday. WBGT, not raw temperature, is evaluated — so humidity forecast is included.</div>
+        <div class="factor-source">Source: OpenWeatherMap 7-day API · Refreshed every 6h</div>
+      </div>
+
+      <!-- Factor 2b: Humidity Amplifier -->
+      <div class="factor-card" style="border-color:rgba(255,87,34,0.3)">
+        <div class="factor-header">
+          <span class="factor-name">💧 Humidity Amplifier</span>
+          <span class="factor-impact impact-high">HIGH WEIGHT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-red" id="bar2b" style="width:65%"></div></div>
+        <!-- Inline city comparison -->
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1;background:var(--surface2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">Dwarka, Delhi</div>
+            <div style="font-size:11px;color:var(--text-sub)">44°C · 62% RH</div>
+            <div style="font-size:15px;font-family:'Syne',sans-serif;color:#FF5722;margin-top:4px">36.2° WBGT</div>
+            <div style="font-size:9px;color:#FF7043;margin-top:2px">⚠ Dangerous</div>
+          </div>
+          <div style="flex:1;background:var(--surface2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text-dim);margin-bottom:4px">Rajasthan (dry)</div>
+            <div style="font-size:11px;color:var(--text-sub)">44°C · 18% RH</div>
+            <div style="font-size:15px;font-family:'Syne',sans-serif;color:#81C784;margin-top:4px">28.1° WBGT</div>
+            <div style="font-size:9px;color:#81C784;margin-top:2px">✓ Tolerable</div>
+          </div>
+        </div>
+        <div class="factor-desc">Same air temperature — completely different body risk. High humidity prevents sweat from evaporating, blocking the body's only cooling mechanism. The model reads forecasted relative humidity daily and recalculates expected WBGT — <strong style="color:var(--text)">not just temperature</strong>.</div>
+        <div style="margin-top:8px;background:rgba(255,87,34,0.08);border-radius:8px;padding:8px 10px;font-size:11px;color:rgba(255,255,255,0.5);line-height:1.5">
+          Formula: WBGT ≈ 0.7·T_wb + 0.2·T_g + 0.1·T_db<br>
+          <span style="color:var(--text-dim)">Wet bulb (T_wb) rises sharply with humidity — this is the dominant term.</span>
+        </div>
+        <div class="factor-source" style="margin-top:6px">Source: Liljegren et al. WBGT model · IMD humidity forecasts per pin code</div>
+      </div>
+
+      <!-- Factor 3: Zone Flood Risk -->
+      <div class="factor-card">
+        <div class="factor-header">
+          <span class="factor-name">🌧 Zone Waterlogging Score</span>
+          <span class="factor-impact impact-med">MED WEIGHT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-orange" id="bar3" style="width:45%"></div></div>
+        <div class="factor-desc">Dwarka Sector 10 has <strong style="color:var(--text)">moderate flood risk</strong> — 6 waterlogging incidents in the last monsoon season. Model adds ₹2 base risk for this zone.</div>
+        <div class="factor-source">Source: IMD rainfall records + civic flood-report database</div>
+      </div>
+
+      <!-- Factor 4: AQI History -->
+      <div class="factor-card">
+        <div class="factor-header">
+          <span class="factor-name">💨 AQI Severe-Day Frequency</span>
+          <span class="factor-impact impact-med">MED WEIGHT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-orange" id="bar4" style="width:38%"></div></div>
+        <div class="factor-desc">Zone averaged <strong style="color:var(--text)">11 Severe AQI days/month</strong> in Nov–Jan. Off-season now — low forecast probability. Adds minor premium uplift for winter weeks.</div>
+        <div class="factor-source">Source: CPCB AQI historical data · 3-year average</div>
+      </div>
+
+      <!-- Factor 5: Rider Trust Score Discount -->
+      <div class="factor-card">
+        <div class="factor-header">
+          <span class="factor-name">🛡 Rider Trust Score</span>
+          <span class="factor-impact impact-low">DISCOUNT</span>
+        </div>
+        <div class="factor-bar-track"><div class="factor-bar-fill fill-green" id="bar5" style="width:92%"></div></div>
+        <div class="factor-desc" id="factor-trust-desc">Shakthi's trust score is <strong style="color:#81C784">92/100</strong> — zero fraud flags, 3 legitimate payouts. High trust earns a <strong style="color:#81C784">₹3 discount</strong> on the base premium this week.</div>
+        <div class="factor-source">Source: Zing internal fraud model · Updated after each claim</div>
+      </div>
+
+      <!-- Premium history -->
+      <div class="section-label">Premium History</div>
+      <div class="prem-history-note">
+        <div class="prem-history-row">
+          <div class="prem-history-week">May 19 – 25</div>
+          <div class="prem-history-right">
+            <div class="prem-history-val">₹20</div>
+            <div class="prem-history-reason">Peak summer · High WBGT forecast</div>
+          </div>
+        </div>
+        <div class="prem-history-row">
+          <div class="prem-history-week">May 12 – 18</div>
+          <div class="prem-history-right">
+            <div class="prem-history-val">₹22</div>
+            <div class="prem-history-reason">Monsoon onset + heat overlap</div>
+          </div>
+        </div>
+        <div class="prem-history-row">
+          <div class="prem-history-week">May 5 – 11</div>
+          <div class="prem-history-right">
+            <div class="prem-history-val">₹18</div>
+            <div class="prem-history-reason">Mild week forecast · Trust discount</div>
+          </div>
+        </div>
+        <div class="prem-history-row">
+          <div class="prem-history-week">Apr 28 – May 4</div>
+          <div class="prem-history-right">
+            <div class="prem-history-val">₹25</div>
+            <div class="prem-history-reason">Severe heat + AQI spike</div>
+          </div>
+        </div>
+        <div class="prem-history-row">
+          <div class="prem-history-week">Apr 21 – 27</div>
+          <div class="prem-history-right">
+            <div class="prem-history-val">₹15</div>
+            <div class="prem-history-reason">Clear forecast · Zone historically safe</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="readonly-notice">
+        <span style="font-size:18px">🔒</span>
+        <div class="readonly-text">Premium is computed by Zing's ML model every Monday. It cannot be changed by the rider. Factors shown are read-only outputs of the regression model — not user inputs.</div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ====== SCREEN 8: INSURER COMMAND CENTER ====== -->
+  <div id="s8" class="screen">
+    <div class="status" style="flex-shrink:0"><span>9:41</span><div class="status-right"><span>●●●</span><span>WiFi</span><span>🔋</span></div></div>
+    <div class="insurer-top">
+      <span class="back-btn" onclick="goTo('s2')">← Back</span>
+      <div style="font-size:11px;color:#90CAF9;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Admin · Insurer View</div>
+      <div class="insurer-title">Command Center</div>
+      <div class="insurer-subtitle">Live overview · Week of May 19–25, 2026</div>
+    </div>
+    <div class="scroll">
+
+      <!-- KPI Grid -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Loss Ratio</div>
+          <div class="kpi-val warn">61%</div>
+          <div class="kpi-sub">Premiums vs payouts</div>
+          <div class="kpi-trend up">▲ +4% vs last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Active Policies</div>
+          <div class="kpi-val good">2,847</div>
+          <div class="kpi-sub">Delhi NCR zone</div>
+          <div class="kpi-trend down">▲ +127 this week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Claims This Week</div>
+          <div class="kpi-val bad">184</div>
+          <div class="kpi-sub">Auto-triggered</div>
+          <div class="kpi-trend up">▲ +38 vs avg</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Fraud Flagged</div>
+          <div class="kpi-val warn">7</div>
+          <div class="kpi-sub">Under review</div>
+          <div class="kpi-trend down">▼ -3 vs last week</div>
+        </div>
+      </div>
+
+      <!-- City Disruption Heatmap -->
+      <div class="heatmap-section">
+        <div class="section-label" style="padding:0;margin-bottom:2px">Zone Risk Heatmap · Delhi NCR</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:10px">Live disruption density · tap a zone for details</div>
+        <div class="heatmap-grid">
+          <div class="heatmap-cell h-crit" onclick="showToast('Dwarka S10: WBGT 36.2° · 68 active claims')">
+            <div class="heatmap-risk crit">🔴</div>
+            <div class="heatmap-zone">Dwarka S10</div>
+          </div>
+          <div class="heatmap-cell h-high" onclick="showToast('Rohini: AQI 410 · 31 active claims')">
+            <div class="heatmap-risk high">🟠</div>
+            <div class="heatmap-zone">Rohini</div>
+          </div>
+          <div class="heatmap-cell h-med" onclick="showToast('Noida 62: Moderate heat · 18 claims')">
+            <div class="heatmap-risk med">🟡</div>
+            <div class="heatmap-zone">Noida 62</div>
+          </div>
+          <div class="heatmap-cell h-low" onclick="showToast('Gurugram: Clear conditions')">
+            <div class="heatmap-risk low">🟢</div>
+            <div class="heatmap-zone">Gurugram</div>
+          </div>
+          <div class="heatmap-cell h-high" onclick="showToast('Lajpat Nagar: WBGT 35.8° · 22 claims')">
+            <div class="heatmap-risk high">🟠</div>
+            <div class="heatmap-zone">Lajpat Ngr</div>
+          </div>
+          <div class="heatmap-cell h-med" onclick="showToast('Saket: Moderate risk · 12 claims')">
+            <div class="heatmap-risk med">🟡</div>
+            <div class="heatmap-zone">Saket</div>
+          </div>
+          <div class="heatmap-cell h-low" onclick="showToast('Vasant Kunj: Low risk today')">
+            <div class="heatmap-risk low">🟢</div>
+            <div class="heatmap-zone">Vasant Kunj</div>
+          </div>
+          <div class="heatmap-cell h-crit" onclick="showToast('Shahdara: AQI 445 + heat · 55 claims')">
+            <div class="heatmap-risk crit">🔴</div>
+            <div class="heatmap-zone">Shahdara</div>
+          </div>
+          <div class="heatmap-cell h-med" onclick="showToast('Mayur Vihar: Moderate AQI · 9 claims')">
+            <div class="heatmap-risk med">🟡</div>
+            <div class="heatmap-zone">Mayur Vihar</div>
+          </div>
+          <div class="heatmap-cell h-low" onclick="showToast('Pitampura: Clear · 2 claims')">
+            <div class="heatmap-risk low">🟢</div>
+            <div class="heatmap-zone">Pitampura</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:9px;color:var(--text-dim)">
+          <span>🟢 Low</span><span>🟡 Medium</span><span>🟠 High</span><span>🔴 Critical</span>
+        </div>
+      </div>
+
+      <!-- Top 3 At-Risk Zones Next Week -->
+      <div class="section-label">Predictive · Top Zones at Risk Next Week</div>
+      <div class="risk-forecast-card">
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px">Based on IMD 7-day forecast + historical claim patterns</div>
+        <div class="risk-forecast-row">
+          <span class="risk-zone-badge badge-crit">CRITICAL</span>
+          <span class="risk-zone-name">Shahdara · WBGT 38°C forecast</span>
+          <span class="risk-zone-pct">84%</span>
+        </div>
+        <div class="risk-forecast-row">
+          <span class="risk-zone-badge badge-high">HIGH RISK</span>
+          <span class="risk-zone-name">Rohini · AQI + heat overlap</span>
+          <span class="risk-zone-pct">71%</span>
+        </div>
+        <div class="risk-forecast-row">
+          <span class="risk-zone-badge badge-med">MODERATE</span>
+          <span class="risk-zone-name">Noida 62 · Flash flood risk</span>
+          <span class="risk-zone-pct">54%</span>
+        </div>
+      </div>
+
+      <!-- Flagged Claims -->
+      <div class="section-label">Fraud Flagged — Under Review</div>
+      <div class="flagged-claims-card">
+        <div class="flagged-header">⚠ 7 Claims Require Manual Review</div>
+        <div class="flagged-row">
+          <span class="flagged-id">ZMT-19203</span>
+          <span class="flagged-reason">GPS spoofing signature detected · accelerometer mismatch</span>
+          <span class="flagged-action">REJECT</span>
+        </div>
+        <div class="flagged-row">
+          <span class="flagged-id">ZMT-48821</span>
+          <span class="flagged-reason">No pre-shift check-in · zone only 41% offline</span>
+          <span class="flagged-action">REVIEW</span>
+        </div>
+        <div class="flagged-row">
+          <span class="flagged-id">ZMT-77103</span>
+          <span class="flagged-reason">3rd claim in 2 weeks · velocity anomaly</span>
+          <span class="flagged-action">REVIEW</span>
+        </div>
+      </div>
+
+      <!-- Payout reserve -->
+      <div style="margin:0 16px 14px;background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:14px">
+        <div class="section-label" style="padding:0;margin-bottom:10px">Payout Reserve Status</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span style="color:var(--text-sub)">Reserve Pool</span><span style="color:var(--text);font-weight:600">₹8,40,000</span>
+        </div>
+        <div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden">
+          <div style="height:100%;width:61%;background:linear-gradient(90deg,#4CAF50,#FF9800);border-radius:4px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:4px">
+          <span>₹5,12,400 paid out (61%)</span><span>₹3,27,600 remaining</span>
+        </div>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+</div><!-- end .phone -->
+
+<script>
+  const DEMO_OTP = '123456';
+  let currentScreen = 's0';
+  let bioStep = 0;
+
+  // ---- Platform + User data store ----
+  const platforms = {
+    zomato: {
+      name: 'Zomato',
+      color: '#E23744',
+      idPrefix: 'ZMT-',
+      idPlaceholder: 'ZMT-XXXXXXXX',
+      idHint: 'Find this in your Zomato Partner app → Profile',
+      idLabel: 'Zomato Rider ID',
+      securityText: "Your Rider ID is verified against Zomato's partner database. Only real delivery partners can enroll.",
+      fingerprintText: '<strong style="color:#64B5F6">Earnings Fingerprint:</strong> We\'ll pull your last 8 weeks of Zomato payouts to build your personal hourly baseline. Your payouts reflect <em>your</em> actual lost earnings — not a flat industry rate.',
+    },
+    swiggy: {
+      name: 'Swiggy',
+      color: '#FC8019',
+      idPrefix: 'SWG-',
+      idPlaceholder: 'SWG-XXXXXXXX',
+      idHint: 'Find this in your Swiggy Delivery app → My Profile',
+      idLabel: 'Swiggy Delivery Partner ID',
+      securityText: "Your Partner ID is verified against Swiggy's delivery partner database. Only real delivery partners can enroll.",
+      fingerprintText: '<strong style="color:#64B5F6">Earnings Fingerprint:</strong> We\'ll pull your last 8 weeks of Swiggy payouts to build your personal hourly baseline. Your payouts reflect <em>your</em> actual lost earnings — not a flat industry rate.',
+    }
+  };
+
+  const userData = { name: '', firstName: '', phone: '', zid: '', upi: '', platform: null };
+
+  // ---- Platform selection ----
+  function selectPlatform(p) {
+    userData.platform = p;
+    const pl = platforms[p];
+    // Update button styles
+    document.getElementById('pick-zomato').className = 'platform-btn' + (p === 'zomato' ? ' selected-zomato' : '');
+    document.getElementById('pick-swiggy').className = 'platform-btn' + (p === 'swiggy' ? ' selected-swiggy' : '');
+    // Update rider ID field
+    document.getElementById('reg-zid-label').textContent = pl.idLabel;
+    document.getElementById('reg-zid').placeholder = pl.idPlaceholder;
+    document.getElementById('reg-zid-hint').textContent = pl.idHint;
+    document.getElementById('reg-security-text').textContent = pl.securityText;
+    document.getElementById('reg-fingerprint-text').innerHTML = pl.fingerprintText;
+  }
+
+  function selectLoginPlatform(p) {
+    userData.platform = p;
+    const pl = platforms[p];
+    document.getElementById('login-pick-zomato').className = 'platform-btn' + (p === 'zomato' ? ' selected-zomato' : '');
+    document.getElementById('login-pick-swiggy').className = 'platform-btn' + (p === 'swiggy' ? ' selected-swiggy' : '');
+    document.getElementById('login-zid-label').textContent = pl.idLabel;
+    document.getElementById('login-zid').placeholder = pl.idPlaceholder;
+  }
+
+  // ---- Update all dynamic fields throughout the app ----
+  function updateUserFields() {
+    const { name, firstName, phone, zid, upi, platform } = userData;
+    const pl = platforms[platform] || platforms.zomato;
+    const pName = pl.name;
+    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
+
+    // Dashboard
+    set('dash-name', firstName + ' 👋');
+    set('shield-tier', 'Gold Tier · ' + pName + ' Partner');
+
+    // Alert trigger screen
+    set('auto-trigger-text', 'All 4 checks passed — Payout processing automatically. No action required from ' + firstName + '.');
+    set('check-activity-val', 'Rider logged off ' + pName + ' 3h ago');
+
+    // Payout screen (s4)
+    set('evf-name-tag', 'personalised to ' + firstName);
+    set('evf-source-text', 'Built from your last 8 weeks of ' + pName + ' payouts. Your payout = your actual expected earnings for those hours — not a flat industry rate.');
+    set('evf-verified-text', '✓ Fairer than flat rates · ✓ Harder to fake — your baseline is unique · ✓ Verified against 8-week ' + pName + ' history');
+    set('fraud-sync-item', 'Platform sync: ' + pName + ' offline confirmed');
+    set('upi-btn', '⚡ Transferred to ' + upi + ' · ₹240');
+
+    // Fraud / claim intelligence screen (s5)
+    set('fraud-api-desc', pName + ' API confirms ' + firstName + ' offline since 11:20 AM. No active deliveries found on any linked device.');
+    set('fraud-earnings-desc', 'End-of-week ' + pName + ' payout shows ₹0 earnings on claimed disruption day. No duplicate income detected.');
+
+    // Biometric screen
+    set('bio-platform-text', 'Step 3 of 3 — We\'re verifying your identity against your ' + pName + ' registration photo to prevent unauthorized access.');
+
+    // Profile screen (s6)
+    set('profile-avatar', initials);
+    set('profile-name', name);
+    set('profile-id', zid + ' · ' + phone);
+    set('profile-tier', '⭐ Gold Tier · ' + pName + ' Partner');
+    set('profile-upi', upi);
+
+    // Premium model screen (s7)
+    setHTML('factor-trust-desc', firstName + '\'s trust score is <strong style="color:#81C784">92/100</strong> — zero fraud flags, 3 legitimate payouts. High trust earns a <strong style="color:#81C784">₹3 discount</strong> on the base premium this week.');
+  }
+
+  // ---- Navigation ----
+  function goTo(id) {
+    document.getElementById(currentScreen).classList.remove('active');
+    const next = document.getElementById(id);
+    next.classList.add('active', 'slide-in-right');
+    next.addEventListener('animationend', () => next.classList.remove('slide-in-right'), { once: true });
+    currentScreen = id;
+    if (id === 's7') animatePremiumBars();
+  }
+
+  function animatePremiumBars() {
+    const bars = [
+      { id: 'bar1',  w: '78%' },
+      { id: 'bar2',  w: '72%' },
+      { id: 'bar2b', w: '65%' },
+      { id: 'bar3',  w: '45%' },
+      { id: 'bar4',  w: '38%' },
+      { id: 'bar5',  w: '92%' },
+    ];
+    bars.forEach(b => { const el = document.getElementById(b.id); if(el) el.style.width = '0%'; });
+    setTimeout(() => {
+      bars.forEach((b, i) => {
+        setTimeout(() => {
+          const el = document.getElementById(b.id);
+          if (el) el.style.width = b.w;
+        }, i * 120);
+      });
+    }, 100);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ---- Registration ----
+  function registerStep1() {
+    if (!userData.platform) { showToast('Please select your delivery platform'); return; }
+    const name = document.getElementById('reg-name').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
+    const zid = document.getElementById('reg-zid').value.trim();
+    const upi = document.getElementById('reg-upi').value.trim();
+    const pl = platforms[userData.platform];
+
+    if (!name) { showToast('Please enter your name'); return; }
+    if (phone.length < 10) { showToast('Enter a valid mobile number'); return; }
+    if (zid.length < 5) { showToast('Enter a valid ' + pl.name + ' Rider ID'); return; }
+    if (!upi.includes('@')) { showToast('Enter a valid UPI ID (e.g. name@upi)'); return; }
+
+    userData.name = name;
+    userData.firstName = name.split(' ')[0];
+    userData.phone = phone;
+    userData.zid = zid;
+    userData.upi = upi;
+
+    showToast('Verifying Rider ID with ' + pl.name + '...');
+    setTimeout(() => {
+      showToast('Rider ID verified ✓ — Building earnings fingerprint');
+      setTimeout(() => {
+        showToast('8-week earnings baseline built ✓ — Sending OTP');
+        setTimeout(() => goTo('s1c'), 800);
+      }, 1200);
+    }, 1500);
+  }
+
+  // ---- Login ----
+  function loginStep1() {
+    if (!userData.platform) { showToast('Please select your delivery platform'); return; }
+    const phone = document.getElementById('login-phone').value.trim();
+    const zid = document.getElementById('login-zid').value.trim();
+    if (phone.length < 10) { showToast('Enter a valid mobile number'); return; }
+    if (zid.length < 4) { showToast('Enter your Rider ID'); return; }
+
+    userData.phone = phone;
+    userData.zid = zid;
+    // For login demo, set a placeholder name that will be replaced by biometric
+    if (!userData.name) { userData.name = 'Partner'; userData.firstName = 'Partner'; }
+
+    showToast('Sending OTP...');
+    setTimeout(() => {
+      document.getElementById('otp-sub').innerHTML = 'Enter the 6-digit OTP sent to your number. <strong style="color:var(--text)">For demo: use 123456</strong>';
+      goTo('s1c');
+    }, 1000);
+  }
+
+  // ---- OTP ----
+  function otpMove(el, nextId) {
+    if (el.value.length === 1) {
+      const next = document.getElementById(nextId);
+      if (next) next.focus();
+    }
+  }
+  function otpDone() {
+    setTimeout(() => {
+      const otp = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(i => document.getElementById(i).value).join('');
+      if (otp.length === 6) verifyOTP();
+    }, 200);
+  }
+  function verifyOTP() {
+    const otp = ['otp1','otp2','otp3','otp4','otp5','otp6'].map(i => document.getElementById(i).value).join('');
+    const err = document.getElementById('otp-error');
+    if (otp === DEMO_OTP) {
+      err.style.display = 'none';
+      showToast('OTP verified ✓');
+      setTimeout(() => goTo('s1d'), 800);
+    } else {
+      err.style.display = 'block';
+      ['otp1','otp2','otp3','otp4','otp5','otp6'].forEach(i => {
+        document.getElementById(i).value = '';
+        document.getElementById(i).classList.add('error');
+        setTimeout(() => document.getElementById(i).classList.remove('error'), 1500);
+      });
+      document.getElementById('otp1').focus();
+    }
+  }
+
+  // ---- Biometric ----
+  function startBiometric() {
+    const btn = document.getElementById('bio-btn');
+    btn.innerHTML = '<div class="spinner"></div>';
+    btn.disabled = true;
+
+    const checks = [
+      { icon1: 'bio-icon1', s1: 'bio-s1', label: '✓ Live', delay: 1200 },
+      { icon1: 'bio-icon2', s1: 'bio-s2', label: '✓ Matched', delay: 2400 },
+      { icon1: 'bio-icon3', s1: 'bio-s3', label: '✓ Registered', delay: 3600 },
+    ];
+
+    checks.forEach(c => {
+      setTimeout(() => {
+        const icon = document.getElementById(c.icon1);
+        const status = document.getElementById(c.s1);
+        icon.textContent = '✓';
+        icon.className = 'bio-check-icon pass';
+        status.textContent = c.label;
+        status.className = 'bio-check-status pass';
+      }, c.delay);
+    });
+
+    setTimeout(() => {
+      showToast('Identity verified ✓ — Welcome, ' + (userData.firstName || 'Partner') + '!');
+      setTimeout(() => { updateUserFields(); goTo('s2'); }, 600);
+    }, 4400);
+  }
+
+  function logout() {
+    showToast('Signed out securely');
+    // Reset platform selection buttons on logout
+    ['pick-zomato','pick-swiggy','login-pick-zomato','login-pick-swiggy'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.className = 'platform-btn';
+    });
+    userData.platform = null; userData.name = ''; userData.firstName = '';
+    setTimeout(() => goTo('s0'), 800);
+  }
+
+  // ---- Morning Check-In ----
+  let checkinDone = false;
+  function doCheckin() {
+    if (checkinDone) return;
+    checkinDone = true;
+    const card = document.getElementById('checkin-card');
+    const btn = document.getElementById('checkin-btn');
+    const streak = document.getElementById('checkin-streak');
+    btn.className = 'checkin-btn done-state';
+    btn.innerHTML = '<span>✓</span> Shift confirmed · Payout eligible today';
+    card.className = 'checkin-card done';
+    streak.textContent = '8-day check-in streak 🔥 · Trust score boosted to 93';
+    showToast('✓ Shift logged — auto-payout armed for today');
+  }
+
+  // ---- Simulate live WBGT updates ----
+  function simulateLiveWeather() {
+    const wbgts = ['35.8°','36.2°','36.5°','36.1°'];
+    const aqis  = ['378','382','390','385'];
+    let i = 0;
+    setInterval(() => {
+      i = (i + 1) % wbgts.length;
+      const mHeat = document.getElementById('m-heat');
+      const mAqi  = document.getElementById('m-aqi');
+      if (mHeat) mHeat.textContent = wbgts[i];
+      if (mAqi)  mAqi.textContent  = aqis[i];
+    }, 4000);
+  }
+  simulateLiveWeather();
+</script>
+</body>
+</html>
